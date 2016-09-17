@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 
 /*
 ** @author: Guillaume FILIOL DE RAIMOND-MICHEL
@@ -31,6 +33,24 @@ void entityMod(Entity e, int mod){
 
     f[e.x+3][e.y+2] = mod;
     f[e.x+2][e.y+3] = mod;
+}
+
+// Will check if the entity can be placed here
+int entityCheck(Entity e){
+    for (int i = 0; i <= 3; i++){
+        if (f[e.x+i][e.y] != 0) return 1;
+        if (f[e.x][e.y+i] != 0) return 1;
+        if (f[e.x+i][e.y+i] != 0) return 1;
+    }
+    if (f[e.x+1][e.y+2] != 0) return 1;
+    if (f[e.x+2][e.y+1] != 0);
+
+    if (f[e.x+3][e.y+1]) return 1;
+    if (f[e.x+1][e.y+3]) return 1;
+
+    if (f[e.x+3][e.y+2]) return 1;
+    if (f[e.x+2][e.y+3]) return 1;
+    return 0;
 }
 
 // 0 if ok, 1 if not
@@ -197,20 +217,44 @@ void print(Field f){
     }
 }
 
+// Will generate random entity
+void generateRandomEntity(int total, int current){
+
+    int N1 = 0, M1 = 508, N2 = 0, M2 = 124;
+
+    int randomX = M1 + rand() / (RAND_MAX / (N1 - M1 + 1) + 1);
+    int randomY = M2 + rand() / (RAND_MAX / (N2 - M2 + 1) + 1);
+
+
+    Entity ret;
+    ret.x = randomX;
+    ret.y = randomY;
+
+    while (entityCheck(ret) != 0){
+
+        randomX = M1 + rand() / (RAND_MAX / (N1 - M1 + 1) + 1);
+        randomY = M2 + rand() / (RAND_MAX / (N2 - M2 + 1) + 1);
+        ret.x = randomX;
+        ret.y = randomY;
+    }
+    entityMod(ret, 1);
+}
+
+void generateXRandomEntities(int nb){
+    for (int i = 1; i <= nb; i++){
+        generateRandomEntity(nb, i);
+    }
+}
+
+
+
 int main(){
 
-    Entity e1;
-    e1.x = 10;
-    e1.y = 10;
-
-    Entity e2;
-    e2.x = 6;
-    e2.y = 6;
+    srand (time(NULL));
 
     init();
 
-    entityMod(e1, 1);
-    entityMod(e2, 1);
+    generateXRandomEntities(256);
 
     print(f);
 
