@@ -97,6 +97,68 @@ int checkMoveDown(Entity e){
     return ret;
 }
 
+// 0 if she has moved, 1 otherwise
+int moveUp(Entity* e){
+    if (checkMoveUp(*e) == 0){
+        entityMod(*e, 0);
+        e->y+=1;
+        entityMod(*e, 1);
+        return 0;
+    }else{
+        return 1;
+    }
+}
+
+// 0 if she has moved, 1 otherwise
+int moveUpperLeft(Entity* e){
+    if (checkMoveUpperLeft(*e) == 0){
+        entityMod(*e, 0);
+        e->x-=1;
+        e->y+=1;
+        entityMod(*e, 1);
+        return 0;
+    }else{
+        return 1;
+    }
+}
+
+// 0 if she has moved, 1 otherwise
+int moveLeft(Entity* e){
+    if (checkMoveLeft(*e) == 0){
+        entityMod(*e, 0);
+        e->x-=1;
+        entityMod(*e, 1);
+        return 0;
+    }else{
+        return 1;
+    }
+}
+
+// 0 if she has moved, 1 otherwise
+int moveLowerLeft(Entity* e){
+    if (checkMoveLowerLeft(*e) == 0){
+        entityMod(*e, 0);
+        e->x-=1;
+        e->y-=1;
+        entityMod(*e, 1);
+        return 0;
+    }else{
+        return 1;
+    }
+}
+
+// 0 if she has moved, 1 otherwise
+int moveDown(Entity* e){
+    if (checkMoveDown(*e) == 0){
+        entityMod(*e, 0);
+        e->y-=1;
+        entityMod(*e, 1);
+        return 0;
+    }else{
+        return 1;
+    }
+}
+
 void init(){
 
     // Global init
@@ -152,10 +214,5 @@ int main(){
 
     print(f);
 
-    printf("Move Up : %d\n", checkMoveUp(e1));
-    printf("Move Upper Left : %d\n", checkMoveUpperLeft(e1));
-    printf("Move Left : %d\n", checkMoveLeft(e1));
-    printf("Move Lower Left : %d\n", checkMoveLowerLeft(e1));
-    printf("Move Down : %d\n", checkMoveDown(e1));
     return 0;
 }
