@@ -244,6 +244,7 @@ void generateRandomEntity(int total, int current){
     entityMod(ret, 1);
 }
 
+// Will generate randomly nb entities
 void generateXRandomEntities(int nb){
     for (int i = 1; i <= nb; i++){
         generateRandomEntity(nb, i);
@@ -276,7 +277,7 @@ void parser(int argc, char const *argv[]){
                     people = number;
                 }
                 else{
-                    printf("%s\n","issue with the number given with the parameters -p. This number should be between 0 and 9" );
+                    printf("%s\n","Issue with the number given with the parameters -p. This number should be between 0 and 9" );
                 }
                 break;
             case 5861510: // -t
@@ -285,15 +286,23 @@ void parser(int argc, char const *argv[]){
                     thread = number;
                 }
                 else{
-                    printf("%s\n","issue with the number given with the parameters -t. This number should be 0,1 or 2" );
+                    printf("%s\n","Issue with the number given with the parameters -t. This number should be 0,1 or 2" );
                 }
                 break;
             default:
-                printf("%s\n","this parameters is not allowed in this program (only -t -p or -m)");    
+                printf("%s\n","This parameters is not allowed in this program (only -t -p or -m)");
 
 
         }
     }
+}
+
+
+// Main method for the field
+void startField(int entityNumber){
+    init();
+    generateXRandomEntities(entityNumber);
+    print(f);
 }
 
 int main(int argc, char const *argv[]){
@@ -301,12 +310,7 @@ int main(int argc, char const *argv[]){
     srand (time(NULL));
 
     parser(argc,argv);
-
-    init();
-
-    generateXRandomEntities(256);
-
-    print(f);
+    startField(256);
 
     return 0;
 }
