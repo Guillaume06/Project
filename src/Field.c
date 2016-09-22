@@ -272,22 +272,29 @@ void parser(int argc, char const *argv[]){
                 break;
             case 5861506: // -p 
                 //convert a char to the int
-                number = *argv[++i]-'0';
-                if(0 <= number && number < 10 && strlen(argv[i]) == 1){
-                    people = number;
+                if(++i==argc){
+                    printf("%s\n","you didn't give any number as a parameter for -p. This number should be between 0 and 9");
                 }
                 else{
-                    printf("%s\n","Issue with the number given with the parameters -p. This number should be between 0 and 9" );
+                    number = *argv[i]-'0';
+                    if(0 <= number && number < 10 && strlen(argv[i]) == 1)
+                        people = number;
+                    else
+                        printf("%s\n","Issue with the number given with the parameters -p. This number should be between 0 and 9" );
                 }
                 break;
             case 5861510: // -t
-                number = *argv[++i]-'0';
-                if(0 <= number && number < 3 && strlen(argv[i]) == 1){
-                    thread = number;
+                if(++i==argc){
+                    printf("%s\n","you didn't give any number as a parameter for -t. This number should be 0,1 or 2");
                 }
                 else{
-                    printf("%s\n","Issue with the number given with the parameters -t. This number should be 0,1 or 2" );
+                    number = *argv[i]-'0';
+                    if(0 <= number && number < 3 && strlen(argv[i]) == 1)
+                        thread = number;
+                    else
+                        printf("%s\n","Issue with the number given with the parameters -t. This number should be 0,1 or 2" );
                 }
+
                 break;
             default:
                 printf("%s\n","This parameters is not allowed in this program (only -t -p or -m)");
