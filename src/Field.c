@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
+#include <pthread.h>
 
 /*
 ** @author: Guillaume FILIOL DE RAIMOND-MICHEL
@@ -18,7 +19,7 @@ typedef struct Entity{
 Field f;
 int people;
 int thread;
-int t = 0;
+int bool_time = 0;
 
 // Movement functions
 
@@ -251,55 +252,38 @@ void generateXRandomEntities(int nb){
     }
 }
 
-//fonction de hashage de string pour pouvoir switcher facilement sur une string (inspiré de djb2)
-int hash(const char *str) {
-    int hash = 5381;
-    int c;
-
-    while ((c = *str++))
-        hash = ((hash << 5) + hash) + c;
-
-    return hash;
-}
 
 void parser(int argc, char const *argv[]){
     int number;
     for (int i = 1; i < argc; ++i){
-        
-        switch(hash(argv[i])){ 
-            case 5861503: // -m
-                t = 1;
-                break;
-            case 5861506: // -p 
-                //convert a char to the int
-                if(++i==argc){
-                    printf("%s\n","you didn't give any number as a parameter for -p. This number should be between 0 and 9");
-                }
-                else{
-                    number = *argv[i]-'0';
-                    if(0 <= number && number < 10 && strlen(argv[i]) == 1)
-                        people = number;
-                    else
-                        printf("%s\n","Issue with the number given with the parameters -p. This number should be between 0 and 9" );
-                }
-                break;
-            case 5861510: // -t
-                if(++i==argc){
-                    printf("%s\n","you didn't give any number as a parameter for -t. This number should be 0,1 or 2");
-                }
-                else{
-                    number = *argv[i]-'0';
-                    if(0 <= number && number < 3 && strlen(argv[i]) == 1)
-                        thread = number;
-                    else
-                        printf("%s\n","Issue with the number given with the parameters -t. This number should be 0,1 or 2" );
-                }
-
-                break;
-            default:
-                printf("%s\n","This parameters is not allowed in this program (only -t -p or -m)");
-
-
+        if (*argv[i]++ == '-'){
+            
+            if(*argv[i]=='p'){
+                number = argv[i][1]-'0';
+                printf("%d\n",number);
+                printf("%d\n",strlen(argv[i]) );
+                if(0 <= number && number < 10 && strlen(argv[i]) == 2)
+                    people = number;
+                else
+                    printf("%s\n","Issue with the number given with the parameters -p. This number should be between 0 and 9" );
+            }
+            else if(*argv[i]=='t'){
+                number = argv[i][1]-'0';
+                if(0 <= number && number < 3 && strlen(argv[i]) == 2)
+                    thread = number;
+                else
+                    printf("%s\n","Issue with the number given with the parameters -t. This number should be 0,1 or 2" );
+            }
+            else if(*argv[i]=='m'){
+                bool_time = 1;
+            }
+            else{
+                printf("%s\n","you didn't give a good parameters(-t -m or -p)");
+            }
+        }
+        else{
+            printf("%s\n","you didn't give a good parameters(-t -m or -p)");
+                
         }
     }
 }
@@ -317,7 +301,8 @@ int main(int argc, char const *argv[]){
     srand (time(NULL));
 
     parser(argc,argv);
-    startField(256);
+    //startField(256);
+
 
     return 0;
 }
