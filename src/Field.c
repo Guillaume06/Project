@@ -260,8 +260,6 @@ void parser(int argc, char const *argv[]){
             
             if(*argv[i]=='p'){
                 number = argv[i][1]-'0';
-                printf("%d\n",number);
-                printf("%d\n",strlen(argv[i]) );
                 if(0 <= number && number < 10 && strlen(argv[i]) == 2)
                     people = number;
                 else
@@ -301,7 +299,7 @@ int main(int argc, char const *argv[]){
     srand (time(NULL));
 
     parser(argc,argv);
-    //startField(256);
+    startField(256);
 
 
     return 0;
