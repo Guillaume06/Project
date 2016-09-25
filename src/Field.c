@@ -22,6 +22,7 @@ int t = 0;
 int azimuthY = 63;
 Entity list[256];
 int initList = 0;
+int bool_time = 0;
 
 // Movement functions
 
@@ -291,47 +292,35 @@ void generateXRandomEntities(int nb){
     }
 }
 
-//fonction de hashage de string pour pouvoir switcher facilement sur une string (inspiré de djb2)
-int hash(const char *str) {
-    int hash = 5381;
-    int c;
-
-    while ((c = *str++))
-        hash = ((hash << 5) + hash) + c;
-
-    return hash;
-}
 
 void parser(int argc, char const *argv[]){
     int number;
     for (int i = 1; i < argc; ++i){
+        if (*argv[i]++ == '-'){
 
-        switch(hash(argv[i])){
-            case 5861503: // -m
-                t = 1;
-                break;
-            case 5861506: // -p
-                //convert a char to the int
-                number = *argv[++i]-'0';
-                if(0 <= number && number < 10 && strlen(argv[i]) == 1){
+            if(*argv[i]=='p'){
+                number = argv[i][1]-'0';
+                if(0 <= number && number < 10 && strlen(argv[i]) == 2)
                     people = number;
-                }
-                else{
+                else
                     printf("%s\n","Issue with the number given with the parameters -p. This number should be between 0 and 9" );
-                }
-                break;
-            case 5861510: // -t
-                number = *argv[++i]-'0';
-                if(0 <= number && number < 3 && strlen(argv[i]) == 1){
+            }
+            else if(*argv[i]=='t'){
+                number = argv[i][1]-'0';
+                if(0 <= number && number < 3 && strlen(argv[i]) == 2)
                     thread = number;
-                }
-                else{
+                else
                     printf("%s\n","Issue with the number given with the parameters -t. This number should be 0,1 or 2" );
-                }
-                break;
-            default:
-                printf("%s\n","This parameters is not allowed in this program (only -t -p or -m)");
-
+            }
+            else if(*argv[i]=='m'){
+                bool_time = 1;
+            }
+            else{
+                printf("%s\n","you didn't give a good parameters(-t -m or -p)");
+            }
+        }
+        else{
+            printf("%s\n","you didn't give a good parameters(-t -m or -p)");
 
         }
     }
@@ -348,6 +337,8 @@ void startField(int entityNumber){
 int main(int argc, char const *argv[]){
 
     srand (time(NULL));
+
+    parser(argc,argv);
     startField(256);
     for (int i = 0; i< 100; i++){
         for (int j = 0; j< 256; j++){
