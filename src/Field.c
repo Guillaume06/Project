@@ -19,6 +19,9 @@ Field f;
 int people;
 int thread;
 int t = 0;
+int azimuthY = 63;
+Entity list[256];
+int initList = 0;
 
 // Movement functions
 
@@ -41,6 +44,8 @@ void entityMod(Entity e, int mod){
 
 // Will check if the entity can be placed here
 int entityCheck(Entity e){
+    if (e.x > 511) return 1;
+    if (e.y > 127) return 1;
     for (int i = 0; i <= 3; i++){
         if (f[e.x+i][e.y] != 0) return 1;
         if (f[e.x][e.y+i] != 0) return 1;
@@ -59,6 +64,7 @@ int entityCheck(Entity e){
 
 // 0 if ok, 1 if not
 int checkMoveUp(Entity e){
+    if (e.y + 4 > 127) return 1;
     int ret = 0;
     if ((f[e.x][e.y+4] != 0) && (f[e.x][e.y+4] != 3)) ret = 1;
     if ((f[e.x+1][e.y+4] != 0) && (f[e.x+1][e.y+4] != 3)) ret = 1;
@@ -70,6 +76,8 @@ int checkMoveUp(Entity e){
 // 0 if ok, 1 if not
 
 int checkMoveUpperLeft(Entity e){
+    if (e.x - 1 < 0) return 1;
+    if (e.y + 4 > 127) return 1;
     int ret = 0;
     if ((f[e.x][e.y+4] != 0) && (f[e.x][e.y+4] != 3)) ret = 1;
     if ((f[e.x+1][e.y+4] != 0) && (f[e.x+1][e.y+4] != 3)) ret = 1;
@@ -86,6 +94,7 @@ int checkMoveUpperLeft(Entity e){
 // 0 if ok, 1 if not
 
 int checkMoveLeft(Entity e){
+    if (e.x -1 < 0) return 1;
     int ret = 0;
     if ((f[e.x-1][e.y] != 0) && (f[e.x-1][e.y] != 3)) ret = 1;
     if ((f[e.x-1][e.y+1] != 0) && (f[e.x-1][e.y+1] != 3)) ret = 1;
@@ -97,6 +106,8 @@ int checkMoveLeft(Entity e){
 // 0 if ok, 1 if not
 
 int checkMoveLowerLeft(Entity e){
+    if (e.x -1 < 0) return 1;
+    if (e.y - 1 < 0) return 1;
     int ret = 0;
     if ((f[e.x][e.y-1] != 0) && (f[e.x][e.y-1] != 3)) ret = 1;
     if ((f[e.x+1][e.y-1] != 0) && (f[e.x+1][e.y-1] != 3)) ret = 1;
@@ -113,6 +124,7 @@ int checkMoveLowerLeft(Entity e){
 // 0 if ok, 1 if not
 
 int checkMoveDown(Entity e){
+    if (e.y - 1 < 0) return 1;
     int ret = 0;
     if ((f[e.x][e.y-1] != 0) && (f[e.x][e.y-1] != 3)) ret = 1;
     if ((f[e.x+1][e.y-1] != 0) && (f[e.x+1][e.y-1] != 3)) ret = 1;
@@ -123,10 +135,13 @@ int checkMoveDown(Entity e){
 
 // 0 if she has moved, 1 otherwise
 int moveUp(Entity* e){
+    if (e->y + 4 > 127) return 1;
     if (checkMoveUp(*e) == 0){
         entityMod(*e, 0);
         e->y+=1;
-        entityMod(*e, 1);
+        if (f[e->x][e->y] != 3){
+            entityMod(*e, 1);
+        }
         return 0;
     }else{
         return 1;
@@ -135,11 +150,15 @@ int moveUp(Entity* e){
 
 // 0 if she has moved, 1 otherwise
 int moveUpperLeft(Entity* e){
+    if (e->x- 1 < 0) return 1;
+    if (e->y + 4 > 127) return 1;
     if (checkMoveUpperLeft(*e) == 0){
         entityMod(*e, 0);
         e->x-=1;
         e->y+=1;
-        entityMod(*e, 1);
+        if (f[e->x][e->y] != 3){
+            entityMod(*e, 1);
+        }
         return 0;
     }else{
         return 1;
@@ -151,7 +170,9 @@ int moveLeft(Entity* e){
     if (checkMoveLeft(*e) == 0){
         entityMod(*e, 0);
         e->x-=1;
-        entityMod(*e, 1);
+        if (f[e->x][e->y] != 3){
+            entityMod(*e, 1);
+        }
         return 0;
     }else{
         return 1;
@@ -164,7 +185,9 @@ int moveLowerLeft(Entity* e){
         entityMod(*e, 0);
         e->x-=1;
         e->y-=1;
-        entityMod(*e, 1);
+        if (f[e->x][e->y] != 3){
+            entityMod(*e, 1);
+        }
         return 0;
     }else{
         return 1;
@@ -176,7 +199,9 @@ int moveDown(Entity* e){
     if (checkMoveDown(*e) == 0){
         entityMod(*e, 0);
         e->y-=1;
-        entityMod(*e, 1);
+        if (f[e->x][e->y] != 3){
+            entityMod(*e, 1);
+        }
         return 0;
     }else{
         return 1;
@@ -221,6 +246,20 @@ void print(Field f){
     }
 }
 
+void entityMovement(Entity* e){
+    if (e->y > azimuthY){
+        if (moveLowerLeft(e) != 0) {
+            if (moveDown(e) != 0) moveLeft(e);
+        }
+    }else if (e->y < azimuthY){
+        if (moveUpperLeft(e) != 0){
+            if (moveUp(e) != 0) moveLeft(e);
+        }
+    }else{
+        moveLeft(e);
+    }
+}
+
 // Will generate random entity
 void generateRandomEntity(int total, int current){
 
@@ -242,6 +281,7 @@ void generateRandomEntity(int total, int current){
         ret.y = randomY;
     }
     entityMod(ret, 1);
+    list[initList++] = ret;
 }
 
 // Will generate randomly nb entities
@@ -265,12 +305,12 @@ int hash(const char *str) {
 void parser(int argc, char const *argv[]){
     int number;
     for (int i = 1; i < argc; ++i){
-        
-        switch(hash(argv[i])){ 
+
+        switch(hash(argv[i])){
             case 5861503: // -m
                 t = 1;
                 break;
-            case 5861506: // -p 
+            case 5861506: // -p
                 //convert a char to the int
                 number = *argv[++i]-'0';
                 if(0 <= number && number < 10 && strlen(argv[i]) == 1){
@@ -308,9 +348,16 @@ void startField(int entityNumber){
 int main(int argc, char const *argv[]){
 
     srand (time(NULL));
-
-    parser(argc,argv);
     startField(256);
+    for (int i = 0; i< 100; i++){
+        for (int j = 0; j< 256; j++){
+            if (list[j].x != 0 && list[j].y != 0){
+                entityMovement(&list[j]);
+            }
+        }
+        printf("\n");
+        print(f);
+    }
 
     return 0;
 }
