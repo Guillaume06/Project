@@ -142,7 +142,10 @@ int moveUp(Entity* e){
         e->y+=1;
         if (f[e->x][e->y] != 3){
             entityMod(*e, 1);
-        }
+        }else{
+                     e->y = 0;
+                     e->x = 0;
+                 }
         return 0;
     }else{
         return 1;
@@ -159,7 +162,10 @@ int moveUpperLeft(Entity* e){
         e->y+=1;
         if (f[e->x][e->y] != 3){
             entityMod(*e, 1);
-        }
+        }else{
+                     e->y = 0;
+                     e->x = 0;
+                 }
         return 0;
     }else{
         return 1;
@@ -173,7 +179,10 @@ int moveLeft(Entity* e){
         e->x-=1;
         if (f[e->x][e->y] != 3){
             entityMod(*e, 1);
-        }
+        }else{
+                     e->y = 0;
+                     e->x = 0;
+                 }
         return 0;
     }else{
         return 1;
@@ -188,7 +197,10 @@ int moveLowerLeft(Entity* e){
         e->y-=1;
         if (f[e->x][e->y] != 3){
             entityMod(*e, 1);
-        }
+        }else{
+                     e->y = 0;
+                     e->x = 0;
+                 }
         return 0;
     }else{
         return 1;
@@ -202,6 +214,9 @@ int moveDown(Entity* e){
         e->y-=1;
         if (f[e->x][e->y] != 3){
             entityMod(*e, 1);
+        }else{
+            e->y = 0;
+            e->x = 0;
         }
         return 0;
     }else{
@@ -219,22 +234,26 @@ void init(){
     }
 
     // Left wall + exit init
-    for (int i=0; i <= 59 ; i++){
-        f[0][i] = 2;
-    }
-    for (int i=68; i <= 127 ; i++){
-        f[0][i] = 2;
+    for (int j = 0; j <16; j++){
+        for (int i=0; i <= 59 ; i++){
+            f[j][i] = 2;
+        }
+        for (int i=68; i <= 127 ; i++){
+            f[j][i] = 2;
+        }
     }
     for (int i=60; i <=  67 ; i++){
         f[0][i] = 3;
     }
 
     // Right wall init
-    for (int i=0; i< 56 ; i++){
-        f[127][i] = 2;
-    }
-    for (int i=72; i< 128 ; i++){
-        f[127][i] = 2;
+        for (int j = 0; j< 16; j++){
+        for (int i=0; i< 56 ; i++){
+        f[128+j+16][i] = 2;
+        }
+        for (int i=72; i< 128 ; i++){
+            f[128+j+16][i] = 2;
+        }
     }
 }
 
@@ -248,6 +267,7 @@ void print(Field f){
 }
 
 void entityMovement(Entity* e){
+    if (e->y == 0 && e->x == 0)return;
     if (e->y > azimuthY){
         if (moveLowerLeft(e) != 0) {
             if (moveDown(e) != 0) moveLeft(e);
@@ -292,6 +312,12 @@ void generateXRandomEntities(int nb){
     }
 }
 
+int end(){
+    for (int i = 0; i < 256; i++){
+        if ( (list[i].x != 0) || (list[i].y != 0) ) return 0;
+    }
+    return 1;
+}
 
 void parser(int argc, char const *argv[]){
     int number;
@@ -340,7 +366,7 @@ int main(int argc, char const *argv[]){
 
     parser(argc,argv);
     startField(256);
-    for (int i = 0; i< 100; i++){
+    while (end() == 0){
         for (int j = 0; j< 256; j++){
             if (list[j].x != 0 && list[j].y != 0){
                 entityMovement(&list[j]);
