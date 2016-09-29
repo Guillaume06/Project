@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
+#include <sys/resource.h>
 
 /*
 ** @author: Guillaume FILIOL DE RAIMOND-MICHEL
@@ -23,6 +24,7 @@ int azimuthY = 63;
 Entity list[256];
 int initList = 0;
 int bool_time = 0;
+double timeTmp;
 
 // Movement functions
 
@@ -61,6 +63,21 @@ int entityCheck(Entity e){
     if (f[e.x+3][e.y+2]) return 1;
     if (f[e.x+2][e.y+3]) return 1;
     return 0;
+}
+
+// http://www.commentcamarche.net/forum/affich-1063120-debutant-en-c-trier-tableau
+void triCroissant(double tableau[], long tailleTableau){
+    long i,t,k=0;
+
+    for(t = 1; t < tailleTableau; t++){
+        for(i=0; i < tailleTableau - 1; i++){
+            if(tableau[i] > tableau[i+1]){
+                k= tableau[i] - tableau[i+1];
+                tableau[i] -= k;
+                tableau[i+1] += k;
+            }
+        }
+    }
 }
 
 // 0 if ok, 1 if not
@@ -307,9 +324,12 @@ void generateRandomEntity(int total, int current){
 
 // Will generate randomly nb entities
 void generateXRandomEntities(int nb){
+
     for (int i = 1; i <= nb; i++){
         generateRandomEntity(nb, i);
     }
+    initList = 0;
+
 }
 
 int end(){
@@ -354,10 +374,45 @@ void parser(int argc, char const *argv[]){
 
 
 // Main method for the field
-void startField(int entityNumber){
+void startField(int entityNumber, int printed){
     init();
     generateXRandomEntities(entityNumber);
-    print(f);
+    if (printed == 1)print(f);
+}
+
+void run(int number, int printed){
+    startField(number, 0);
+    while (end() == 0){
+        for (int j = 0; j< 256; j++){
+            if (list[j].x != 0 && list[j].y != 0){
+                entityMovement(&list[j]);
+            }
+        }
+        if (printed == 1)printf("\n");
+        if (printed == 1)print(f);
+    }
+}
+
+void runMetrics(int number){
+    double time[5];
+    int size[5];
+    for(int i = 0; i< 5; i++){
+        run(number, 0);
+        double time_in_seconds=(double)clock()/(double)CLOCKS_PER_SEC;
+        time[i] = time_in_seconds - timeTmp;
+        timeTmp = time_in_seconds;
+        struct rusage rUsage;
+        getrusage(1, &rUsage);
+        size[i]=rUsage.ru_maxrss;
+    }
+
+
+    triCroissant(&time, 5);
+    triCroissant(&size, 5);
+
+    printf ("Average CPU time used : %lf\n", (time[1]+time[2]+time[3])/3);
+    printf("Average max resident set size : %d\n", (size[1]+size[2]+size[3])/3);
+
 }
 
 int main(int argc, char const *argv[]){
@@ -365,16 +420,8 @@ int main(int argc, char const *argv[]){
     srand (time(NULL));
 
     parser(argc,argv);
-    startField(256);
-    while (end() == 0){
-        for (int j = 0; j< 256; j++){
-            if (list[j].x != 0 && list[j].y != 0){
-                entityMovement(&list[j]);
-            }
-        }
-        printf("\n");
-        print(f);
-    }
+    runMetrics(256);
+
 
     return 0;
 }
