@@ -3,6 +3,8 @@
 #include <time.h>
 #include <string.h>
 #include <sys/resource.h>
+#include <pthread.h>
+#include <math.h>
 
 /*
 ** @author: Guillaume FILIOL DE RAIMOND-MICHEL
@@ -415,13 +417,85 @@ void runMetrics(int number){
 
 }
 
+
+// method for t0
+void *t0_method(void *p_data){
+    
+    for (int i = 0; i< 100; i++){
+        for (int j = 0; j< 256; j++){
+            if (list[j].x != 0 && list[j].y != 0){
+                entityMovement(&list[j]);
+            }
+        }
+        printf("\n");
+        print(f);
+    }
+
+}
+
+
+/*
+**  to compile gcc Field.c -lpthread
+*/
+
 int main(int argc, char const *argv[]){
+
+    printf ("%d", (int) pow (3, 4));
 
     srand (time(NULL));
 
     parser(argc,argv);
-    runMetrics(256);
+    /*
+    startField(256,0);
 
 
+    switch(thread){
+        case 0:
+            
+            {
+                pthread_t t0;
+
+                if (pthread_create(&t0, NULL, t0_method, NULL)) {
+                    perror("pthread_create");
+                    return EXIT_FAILURE;
+                }
+
+                if (pthread_join(t0, NULL)) {
+                    perror("pthread_join");
+                    return EXIT_FAILURE;
+                }
+
+                printf("Après la création du thread.\n");
+            }
+            break;
+
+        case 1:
+            
+
+            break;
+        case 2:
+            {
+                pthread_t t2[people];
+
+
+                for (int i = 0; i < people; i++)
+                {
+                    if (pthread_create(&(t2[i]), NULL, t0_method, NULL)) {
+                        perror("pthread_create");
+                        return EXIT_FAILURE;
+                    }
+
+                    if (pthread_join(t2[i], NULL)) {
+                        perror("pthread_join");
+                        return EXIT_FAILURE;
+                    }
+                }
+            }
+            break;
+    }
+
+
+    
+*/
     return 0;
 }
