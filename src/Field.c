@@ -396,23 +396,28 @@ void run(int number, int printed){
 }
 
 void runMetrics(int number){
-    double time[5];
+
+    double timeT[5];
+    long int timeUser[5];
     int size[5];
+    double response[5];
     for(int i = 0; i< 5; i++){
         run(number, 0);
         double time_in_seconds=(double)clock()/(double)CLOCKS_PER_SEC;
-        time[i] = time_in_seconds - timeTmp;
+        timeT[i] = time_in_seconds - timeTmp;
         timeTmp = time_in_seconds;
         struct rusage rUsage;
         getrusage(1, &rUsage);
         size[i]=rUsage.ru_maxrss;
+        timeUser[i]=rUsage.ru_utime.tv_usec;
     }
 
 
-    triCroissant(&time, 5);
+    triCroissant(&timeT, 5);
     triCroissant(&size, 5);
-
-    printf ("Average CPU time used : %lf\n", (time[1]+time[2]+time[3])/3);
+    triCroissant(&timeUser, 5);
+    printf ("Average CPU time used : %lf\n", (timeT[1]+timeT[2]+timeT[3])/3);
+    printf ("Average user time used : %lf\n", (timeUser[1]+timeUser[2]+timeUser[3])/3);
     printf("Average max resident set size : %d\n", (size[1]+size[2]+size[3])/3);
 
 }
@@ -440,11 +445,12 @@ void *t0_method(void *p_data){
 
 int main(int argc, char const *argv[]){
 
-    printf ("%d", (int) pow (3, 4));
+    printf ("%d\n", (int) pow (3, 4));
 
     srand (time(NULL));
 
     parser(argc,argv);
+    runMetrics(256);
     /*
     startField(256,0);
 
