@@ -23,7 +23,7 @@ int people;
 int thread;
 int t = 0;
 int azimuthY = 63;
-Entity list[256];
+Entity list[512];
 int initList = 0;
 int bool_time = 0;
 double timeTmp;
@@ -335,10 +335,20 @@ void generateXRandomEntities(int nb){
 }
 
 int end(){
-    for (int i = 0; i < 256; i++){
+    for (int i = 0; i < people; i++){
         if ( (list[i].x != 0) || (list[i].y != 0) ) return 0;
     }
     return 1;
+}
+
+//just use to know how many entities we have to create
+int power(int number){
+    int result = 1;
+    while(number>0){
+        result *= 2;
+        number--;
+    }
+    return result;
 }
 
 void parser(int argc, char const *argv[]){
@@ -382,10 +392,9 @@ void startField(int entityNumber, int printed){
     if (printed == 1)print(f);
 }
 
-void run(int number, int printed){
-    startField(number, 0);
+void run(int printed){
     while (end() == 0){
-        for (int j = 0; j< 256; j++){
+        for (int j = 0; j< people; j++){
             if (list[j].x != 0 && list[j].y != 0){
                 entityMovement(&list[j]);
             }
@@ -437,19 +446,29 @@ void runMetrics(int number){
 
 }
 
+//method for t1
+void *t1_method(int area){
 
-// method for t0
-void *t0_method(void *p_data){
-    
-    for (int i = 0; i< 100; i++){
-        for (int j = 0; j< 256; j++){
-            if (list[j].x != 0 && list[j].y != 0){
+    while (end() == 0){
+        for (int j = 0; j< people; j++){
+            if (list[j].x < area*128 && list[j].y <= (area+1)*128){
                 entityMovement(&list[j]);
             }
         }
-        printf("\n");
-        print(f);
     }
+}
+
+// method for t2
+void *t2_method(int rank){
+    
+    while (end() == 0){
+        if (list[rank].x != 0 && list[rank].y != 0){
+            entityMovement(&list[rank]);
+        }
+        printf("\n");
+        print(f);    
+    }
+
 
 }
 
@@ -460,34 +479,18 @@ void *t0_method(void *p_data){
 
 int main(int argc, char const *argv[]){
 
-    printf ("%d\n", (int) pow (3, 4));
-
     srand (time(NULL));
 
     parser(argc,argv);
-    runMetrics(256);
-    /*
-    startField(256,0);
+    
+    startField(people,0);
 
 
     switch(thread){
         case 0:
-            
-            {
-                pthread_t t0;
-
-                if (pthread_create(&t0, NULL, t0_method, NULL)) {
-                    perror("pthread_create");
-                    return EXIT_FAILURE;
-                }
-
-                if (pthread_join(t0, NULL)) {
-                    perror("pthread_join");
-                    return EXIT_FAILURE;
-                }
-
-                printf("Après la création du thread.\n");
-            }
+              
+            run(bool_time);
+                
             break;
 
         case 1:
@@ -501,7 +504,7 @@ int main(int argc, char const *argv[]){
 
                 for (int i = 0; i < people; i++)
                 {
-                    if (pthread_create(&(t2[i]), NULL, t0_method, NULL)) {
+                    if (pthread_create(&(t2[i]), NULL, t2_method, NULL)) {
                         perror("pthread_create");
                         return EXIT_FAILURE;
                     }
@@ -510,6 +513,7 @@ int main(int argc, char const *argv[]){
                         perror("pthread_join");
                         return EXIT_FAILURE;
                     }
+                
                 }
             }
             break;
@@ -517,6 +521,6 @@ int main(int argc, char const *argv[]){
 
 
     
-*/
+
     return 0;
 }
