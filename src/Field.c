@@ -397,19 +397,34 @@ void run(int number, int printed){
 
 void runMetrics(int number){
 
+    int timeInit;
+    int timeInitUser;
     double timeT[5];
     long int timeUser[5];
     int size[5];
     double response[5];
+    struct rusage rUsage;
     for(int i = 0; i< 5; i++){
-        run(number, 0);
+        getrusage(1, &rUsage);
+        timeInitUser = rUsage.ru_utime.tv_usec;
+        timeInit = (double)clock()/(double)CLOCKS_PER_SEC;
+        startField(number, 0);
+        timeInit = (double)clock()/(double)CLOCKS_PER_SEC - timeInit;
+        timeInitUser = rUsage.ru_utime.tv_usec - timeInitUser;
+        getrusage(1, &rUsage);
+        while (end() == 0){
+            for (int j = 0; j< 256; j++){
+                if (list[j].x != 0 && list[j].y != 0){
+                    entityMovement(&list[j]);
+                }
+            }
+        }
         double time_in_seconds=(double)clock()/(double)CLOCKS_PER_SEC;
-        timeT[i] = time_in_seconds - timeTmp;
+        timeT[i] = time_in_seconds - timeTmp - timeInit;
         timeTmp = time_in_seconds;
-        struct rusage rUsage;
         getrusage(1, &rUsage);
         size[i]=rUsage.ru_maxrss;
-        timeUser[i]=rUsage.ru_utime.tv_usec;
+        timeUser[i]=rUsage.ru_utime.tv_usec - timeInitUser;
     }
 
 
