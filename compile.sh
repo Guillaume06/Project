@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
-
-gcc -Wall --std=c99 src/Field.c -o out/Field
+#  @author : GONNIN THIBAUT, FILIOL DE RAIMOND-MICHEL Guillaume
+gcc -Wall --std=c99 src/Field.c -o bin/Field -lpthread

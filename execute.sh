@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
-
-./out/Field
+#  @author : GONNIN THIBAUT, FILIOL DE RAIMOND-MICHEL Guillaume
+./bin/Field
