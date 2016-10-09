@@ -452,8 +452,8 @@ void *t1_method(int area){
 
     while (end() == 0){
         for (int j = 0; j< people; j++){
-            if (list[j].x != 0 && list[j].y != 0){
-                if (list[j].x <= area*128 && list[j].x <= area*128+127){
+            if ((list[j].x != 0) && (list[j].y != 0)){
+                if ((list[j].x <= area*128) && (list[j].x <= area*128+127)){
                     entityMovement(&list[j]);
 
                 }
@@ -461,6 +461,8 @@ void *t1_method(int area){
         }
 
     }
+
+    pthread_exit(NULL);
 }
 
 // method for t2
@@ -469,6 +471,9 @@ void *t2_method(int rank){
     while (list[rank].x != 0){
         entityMovement(&list[rank]);
     }
+
+    pthread_exit(NULL);
+
 }
 
 
@@ -497,20 +502,18 @@ int main(int argc, char const *argv[]){
                 pthread_t t1[4];
 
                 for (int i = 0; i < 4; i++){
-                    printf("%d\n",i );
-                    if (pthread_create(&(t1[i]), NULL, t1_method, i)) {
+                    if (pthread_create(&(t1[i]), NULL, t1_method, 4-i)) {
                         perror("pthread_create");
                         return EXIT_FAILURE;
-                    }                    
-                }
-
-                for (int i = 0; i < 4; i++)
-                {
+                    }
+                    
                     if (pthread_join(t1[i], NULL)) {
                         perror("pthread_join");
                         return EXIT_FAILURE;
-                    }                    
+                    }
+                                                             
                 }
+
 
             }
 
