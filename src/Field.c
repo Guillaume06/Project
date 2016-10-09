@@ -503,11 +503,6 @@ int main(int argc, char const *argv[]){
                         return EXIT_FAILURE;
                     }                    
                 }
-                    if (pthread_join(t1[1], NULL)) {
-                        perror("pthread_join");
-                        return EXIT_FAILURE;
-                    }
-/*
 
                 for (int i = 0; i < 4; i++)
                 {
@@ -516,7 +511,7 @@ int main(int argc, char const *argv[]){
                         return EXIT_FAILURE;
                     }                    
                 }
-*/
+
             }
 
             break;
