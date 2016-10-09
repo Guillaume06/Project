@@ -392,62 +392,53 @@ void startField(int entityNumber, int printed){
     if (printed == 1)print(f);
 }
 
-//méthod for t0
-void run(int printed){
-    while (end() == 0){
-        for (int j = 0; j< people; j++){
-            if (list[j].x != 0 && list[j].y != 0){
-                entityMovement(&list[j]);
-            }
+
+void run_global(int printed,void (*function)(int),int arg){
+    if (bool_time == 1){
+        int timeInit;
+        int timeInitUser;
+        double timeT[5];
+        long int timeUser[5];
+        int size[5];
+        double response[5];
+        struct rusage rUsage;
+        for(int i = 0; i< 5; i++){
+            getrusage(1, &rUsage);
+            timeInitUser = rUsage.ru_utime.tv_usec;
+            timeInit = (double)clock()/(double)CLOCKS_PER_SEC;
+            startField(people, 0);
+            timeInit = (double)clock()/(double)CLOCKS_PER_SEC - timeInit;
+            timeInitUser = rUsage.ru_utime.tv_usec - timeInitUser;
+            getrusage(1, &rUsage);
+            
+            (*function)(arg);
+            
+            double time_in_seconds=(double)clock()/(double)CLOCKS_PER_SEC;
+            timeT[i] = time_in_seconds - timeTmp - timeInit;
+            timeTmp = time_in_seconds;
+            getrusage(1, &rUsage);
+            size[i]=rUsage.ru_maxrss;
+            timeUser[i]=rUsage.ru_utime.tv_usec - timeInitUser;
         }
-        if (printed == 1)printf("\n");
-        if (printed == 1)print(f);
+
+
+        triCroissant(&timeT, 5);
+        triCroissant(&size, 5);
+        triCroissant(&timeUser, 5);
+        printf ("Average CPU time used : %lf\n", (timeT[1]+timeT[2]+timeT[3])/3);
+        printf ("Average user time used : %lf\n", (timeUser[1]+timeUser[2]+timeUser[3])/3);
+        printf("Average max resident set size : %d\n", (size[1]+size[2]+size[3])/3);
+
     }
+    else{
+            (*function)(arg);
+    }
+        
 }
 
-void runMetrics(int number){
-
-    int timeInit;
-    int timeInitUser;
-    double timeT[5];
-    long int timeUser[5];
-    int size[5];
-    double response[5];
-    struct rusage rUsage;
-    for(int i = 0; i< 5; i++){
-        getrusage(1, &rUsage);
-        timeInitUser = rUsage.ru_utime.tv_usec;
-        timeInit = (double)clock()/(double)CLOCKS_PER_SEC;
-        startField(number, 0);
-        timeInit = (double)clock()/(double)CLOCKS_PER_SEC - timeInit;
-        timeInitUser = rUsage.ru_utime.tv_usec - timeInitUser;
-        getrusage(1, &rUsage);
-        while (end() == 0){
-            for (int j = 0; j< 256; j++){
-                if (list[j].x != 0 && list[j].y != 0){
-                    entityMovement(&list[j]);
-                }
-            }
-        }
-        double time_in_seconds=(double)clock()/(double)CLOCKS_PER_SEC;
-        timeT[i] = time_in_seconds - timeTmp - timeInit;
-        timeTmp = time_in_seconds;
-        getrusage(1, &rUsage);
-        size[i]=rUsage.ru_maxrss;
-        timeUser[i]=rUsage.ru_utime.tv_usec - timeInitUser;
-    }
-
-
-    triCroissant(&timeT, 5);
-    triCroissant(&size, 5);
-    triCroissant(&timeUser, 5);
-    printf ("Average CPU time used : %lf\n", (timeT[1]+timeT[2]+timeT[3])/3);
-    printf ("Average user time used : %lf\n", (timeUser[1]+timeUser[2]+timeUser[3])/3);
-    printf("Average max resident set size : %d\n", (size[1]+size[2]+size[3])/3);
-
-}
-
-//method for t1
+/*
+**function used for a thread in the t1 case
+*/
 void *t1_method(int area){
 
     while (end() == 0){
@@ -465,7 +456,9 @@ void *t1_method(int area){
     pthread_exit(NULL);
 }
 
-// method for t2
+/*
+**function used for a thread in the t2 case
+*/
 void *t2_method(int rank){
     
     while (list[rank].x != 0){
@@ -473,14 +466,70 @@ void *t2_method(int rank){
     }
 
     pthread_exit(NULL);
+}
 
+/*
+**general method for t0
+*/
+void run_t0(int printed){
+    while (end() == 0){
+        for (int j = 0; j< people; j++){
+            if (list[j].x != 0 && list[j].y != 0){
+                entityMovement(&list[j]);
+            }
+        }
+        if (printed == 1)printf("\n");
+        if (printed == 1)print(f);
+    }
+}
+
+/*
+**general method for t1
+*/
+void run_t1(){
+    pthread_t t1[4];
+
+    for (int i = 0; i < 4; i++){
+        if (pthread_create(&(t1[i]), NULL, t1_method, 4-i)) {
+            perror("pthread_create");
+            return EXIT_FAILURE;
+        }
+        
+        if (pthread_join(t1[i], NULL)) {
+            perror("pthread_join");
+            return EXIT_FAILURE;
+        }                                            
+    }
+}
+
+/*
+**general method for t2
+*/
+void run_t2(){
+    pthread_t t2[people];
+                  
+
+    for (int i = 0; i < people; i++){
+        if (pthread_create(&(t2[i]), NULL, t2_method, i)) {
+            perror("pthread_create");
+            return EXIT_FAILURE;
+        }
+    }
+
+
+
+    for (int i = 0; i < people; i++){
+        if (pthread_join(t2[i], NULL)) {
+            perror("pthread_join");
+            return EXIT_FAILURE;
+        }
+    }
+    
+
+    
 }
 
 
-
-/*
-**  to compile gcc Field.c -lpthread
-*/
 
 int main(int argc, char const *argv[]){
 
@@ -492,61 +541,16 @@ int main(int argc, char const *argv[]){
 
     switch(thread){
         case 0:
-              
-            run(0);
-                
+            run_global(0,run_t0,NULL);    
             break;
 
         case 1:
-            {
-                pthread_t t1[4];
-
-                for (int i = 0; i < 4; i++){
-                    if (pthread_create(&(t1[i]), NULL, t1_method, 4-i)) {
-                        perror("pthread_create");
-                        return EXIT_FAILURE;
-                    }
-                    
-                    if (pthread_join(t1[i], NULL)) {
-                        perror("pthread_join");
-                        return EXIT_FAILURE;
-                    }
-                                                             
-                }
-
-
-            }
-
+            run_global(0,run_t1,NULL);
             break;
         case 2:
-            {
-                pthread_t t2[people];
-                              
-
-                for (int i = 0; i < people; i++){
-                    if (pthread_create(&(t2[i]), NULL, t2_method, i)) {
-                        perror("pthread_create");
-                        return EXIT_FAILURE;
-                    }
-                }
-
-
-
-                for (int i = 0; i < people; i++){
-                    if (pthread_join(t2[i], NULL)) {
-                        perror("pthread_join");
-                        return EXIT_FAILURE;
-                    }
-                }
-                
-
-                
-            }
+            run_global(0,run_t2,NULL);
             break;
     }
-
-
-    
 
     return 0;
 }
