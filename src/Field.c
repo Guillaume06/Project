@@ -7,7 +7,7 @@
 #include <math.h>
 
 /*
-** @author: Guillaume FILIOL DE RAIMOND-MICHEL
+** @author: Guillaume FILIOL DE RAIMOND-MICHEL, Thibaut GONNIN
 */
 
 // Typedefs
@@ -359,7 +359,7 @@ void parser(int argc, char const *argv[]){
             if(*argv[i]=='p'){
                 number = argv[i][1]-'0';
                 if(0 <= number && number < 10 && strlen(argv[i]) == 2)
-                    people = number;
+                    people = power(number);
                 else
                     printf("%s\n","Issue with the number given with the parameters -p. This number should be between 0 and 9" );
             }
@@ -392,6 +392,7 @@ void startField(int entityNumber, int printed){
     if (printed == 1)print(f);
 }
 
+//méthod for t0
 void run(int printed){
     while (end() == 0){
         for (int j = 0; j< people; j++){
@@ -451,26 +452,25 @@ void *t1_method(int area){
 
     while (end() == 0){
         for (int j = 0; j< people; j++){
-            if (list[j].x < area*128 && list[j].y <= (area+1)*128){
-                entityMovement(&list[j]);
+            if (list[j].x != 0 && list[j].y != 0){
+                if (list[j].x <= area*128 && list[j].x <= area*128+127){
+                    entityMovement(&list[j]);
+
+                }
             }
         }
+
     }
 }
 
 // method for t2
 void *t2_method(int rank){
     
-    while (end() == 0){
-        if (list[rank].x != 0 && list[rank].y != 0){
-            entityMovement(&list[rank]);
-        }
-        printf("\n");
-        print(f);    
+    while (list[rank].x != 0){
+        entityMovement(&list[rank]);
     }
-
-
 }
+
 
 
 /*
@@ -485,36 +485,64 @@ int main(int argc, char const *argv[]){
     
     startField(people,0);
 
-
     switch(thread){
         case 0:
               
-            run(bool_time);
+            run(0);
                 
             break;
 
         case 1:
-            
+            {
+                pthread_t t1[4];
+
+                for (int i = 0; i < 4; i++){
+                    printf("%d\n",i );
+                    if (pthread_create(&(t1[i]), NULL, t1_method, i)) {
+                        perror("pthread_create");
+                        return EXIT_FAILURE;
+                    }                    
+                }
+                    if (pthread_join(t1[1], NULL)) {
+                        perror("pthread_join");
+                        return EXIT_FAILURE;
+                    }
+/*
+
+                for (int i = 0; i < 4; i++)
+                {
+                    if (pthread_join(t1[i], NULL)) {
+                        perror("pthread_join");
+                        return EXIT_FAILURE;
+                    }                    
+                }
+*/
+            }
 
             break;
         case 2:
             {
                 pthread_t t2[people];
+                              
 
-
-                for (int i = 0; i < people; i++)
-                {
-                    if (pthread_create(&(t2[i]), NULL, t2_method, NULL)) {
+                for (int i = 0; i < people; i++){
+                    if (pthread_create(&(t2[i]), NULL, t2_method, i)) {
                         perror("pthread_create");
                         return EXIT_FAILURE;
                     }
+                }
 
+
+
+                for (int i = 0; i < people; i++){
                     if (pthread_join(t2[i], NULL)) {
                         perror("pthread_join");
                         return EXIT_FAILURE;
                     }
-                
                 }
+                
+
+                
             }
             break;
     }
