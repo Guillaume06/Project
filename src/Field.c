@@ -26,6 +26,7 @@ int azimuthY = 63;
 Entity list[512];
 int initList = 0;
 int bool_time = 0;
+int etape=0;
 double timeTmp;
 
 // Movement functions
@@ -373,6 +374,14 @@ void parser(int argc, char const *argv[]){
             else if(*argv[i]=='m'){
                 bool_time = 1;
             }
+            else if (*argv[i]=='e'){
+                number = argv[i][1]-'0';
+                if(1 <= number && number < 4 && strlen(argv[i]) == 2)
+                    etape = number;
+                else
+                    printf("%s\n","Issue with the number given with the parameters -e. This number should be 1,2 or 3" );                
+
+            }
             else{
                 printf("%s\n","you didn't give a good parameters(-t -m or -p)");
             }
@@ -492,12 +501,10 @@ void run_t1(){
     for (int i = 0; i < 4; i++){
         if (pthread_create(&(t1[i]), NULL, t1_method, 4-i)) {
             perror("pthread_create");
-            return EXIT_FAILURE;
         }
         
         if (pthread_join(t1[i], NULL)) {
             perror("pthread_join");
-            return EXIT_FAILURE;
         }                                            
     }
 }
@@ -512,7 +519,6 @@ void run_t2(){
     for (int i = 0; i < people; i++){
         if (pthread_create(&(t2[i]), NULL, t2_method, i)) {
             perror("pthread_create");
-            return EXIT_FAILURE;
         }
     }
 
@@ -521,12 +527,8 @@ void run_t2(){
     for (int i = 0; i < people; i++){
         if (pthread_join(t2[i], NULL)) {
             perror("pthread_join");
-            return EXIT_FAILURE;
         }
-    }
-    
-
-    
+    } 
 }
 
 
@@ -538,18 +540,27 @@ int main(int argc, char const *argv[]){
     parser(argc,argv);
     
     startField(people,0);
-
-    switch(thread){
-        case 0:
-            run_global(0,run_t0,NULL);    
-            break;
-
+    switch(etape){
         case 1:
-            run_global(0,run_t1,NULL);
-            break;
+            switch(thread){
+                case 0:
+                    run_global(0,run_t0,NULL);    
+                    break;
+
+                case 1:
+                    run_global(0,run_t1,NULL);
+                    break;
+                case 2:
+                    run_global(0,run_t2,NULL);
+                    break;
+            }
+        break;
+
         case 2:
-            run_global(0,run_t2,NULL);
-            break;
+        break;
+
+        case 3:
+        break;        
     }
 
     return 0;
