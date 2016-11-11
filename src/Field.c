@@ -11,22 +11,86 @@
  * @author: Guillaume FILIOL DE RAIMOND-MICHEL, Thibaut GONNIN
  */
 
-// Typedefs
+/*********************************************
+ *                                           *
+ *        Global Definitions                 *
+ *                                           *
+ *********************************************/
 typedef int Field[512][128];
 typedef struct Entity{
     int x;
     int y;
 }Entity;
 
-// Global definitions
 Field f;
 int people, thread, t = 0, azimuthY = 63, initList = 0, bool_time = 0, etape=0;
 Entity list[512];
 double timeTmp;
 
-// Movement functions
+/*********************************************
+ *                                           *
+ *        Diverse calculation Functions      *
+ *                                           *
+ *********************************************/
 
-// 0 for delete, 1 for add
+ /*
+  * Will make a ascending sort on the board
+  * Source : http://www.commentcamarche.net/forum/affich-1063120-debutant-en-c-trier-tableau
+  */
+ void triCroissantDouble(double tableau[], long tailleTableau){
+     long i,t,k=0;
+     for(t = 1; t < tailleTableau; t++){
+         for(i = 0; i < tailleTableau - 1; i++){
+             if(tableau[i] > tableau[i+1]){
+                 k                = tableau[i] - tableau[i+1];
+                 tableau[i]      -= k;
+                 tableau[i+1]    += k;
+             }
+         }
+     }
+ }
+
+ /*
+  * Will make a ascending sort on the board
+  * Source : http://www.commentcamarche.net/forum/affich-1063120-debutant-en-c-trier-tableau
+  */
+ void triCroissantInt(long int tableau[], long tailleTableau){
+     long i,t,k=0;
+
+     for(t = 1; t < tailleTableau; t++){
+         for(i=0; i < tailleTableau - 1; i++){
+             if(tableau[i] > tableau[i+1]){
+                 k                = tableau[i] - tableau[i+1];
+                 tableau[i]      -= k;
+                 tableau[i+1]    += k;
+             }
+         }
+     }
+ }
+
+ /*
+  * Will calculate 2 power number
+  * needed so we can know how many entity we needed to know
+  */
+ int power(int number){
+     int result = 1;
+     while(number > 0){
+         result *= 2;
+         number--;
+     }
+     return result;
+ }
+
+/*********************************************
+ *                                           *
+ *          Movement Functions               *
+ *                                           *
+ *********************************************/
+
+/*
+ * Will modify the value of the field
+ * 0 for delete, 1 for add
+ */
 void entityMod(Entity e, int mod){
     for (int i = 0; i <= 3; i++){
         f[e.x+i][e.y]   = mod;
@@ -43,7 +107,9 @@ void entityMod(Entity e, int mod){
     f[e.x+2][e.y+3]     = mod;
 }
 
-// Will check if the entity can be placed here
+/*
+ * Will check if the entity can be placed here
+ */
 int entityCheck(Entity e){
     if (e.x > 511) return 1;
     if (e.y > 127) return 1;
@@ -63,36 +129,10 @@ int entityCheck(Entity e){
     return 0;
 }
 
-// http://www.commentcamarche.net/forum/affich-1063120-debutant-en-c-trier-tableau
-void triCroissantDouble(double tableau[], long tailleTableau){
-    long i,t,k=0;
-
-    for(t = 1; t < tailleTableau; t++){
-        for(i = 0; i < tailleTableau - 1; i++){
-            if(tableau[i] > tableau[i+1]){
-                k                = tableau[i] - tableau[i+1];
-                tableau[i]      -= k;
-                tableau[i+1]    += k;
-            }
-        }
-    }
-}
-
-void triCroissantInt(long int tableau[], long tailleTableau){
-    long i,t,k=0;
-
-    for(t = 1; t < tailleTableau; t++){
-        for(i=0; i < tailleTableau - 1; i++){
-            if(tableau[i] > tableau[i+1]){
-                k                = tableau[i] - tableau[i+1];
-                tableau[i]      -= k;
-                tableau[i+1]    += k;
-            }
-        }
-    }
-}
-
-// 0 if ok, 1 if not
+/*
+ * Will check if the entity can go up
+ * 0 if yes, 1 otherwise
+ */
 int checkMoveUp(Entity e){
     if (e.y + 4 > 127) return 1;
     int ret = 0;
@@ -102,9 +142,10 @@ int checkMoveUp(Entity e){
     if ((f[e.x+3][e.y+4] != 0)  && (f[e.x+3][e.y+4] != 3))  ret = 1;
     return ret;
 }
-
-// 0 if ok, 1 if not
-
+/*
+ * Will check if the entity can go Upper left
+ * 0 if yes, 1 otherwise
+ */
 int checkMoveUpperLeft(Entity e){
     if (e.x - 1 < 0)    return 1;
     if (e.y + 4 > 127)  return 1;
@@ -121,8 +162,10 @@ int checkMoveUpperLeft(Entity e){
     return ret;
 }
 
-// 0 if ok, 1 if not
-
+/*
+ * Will check if the entity can go left
+ * 0 if yes, 1 otherwise
+ */
 int checkMoveLeft(Entity e){
     if (e.x -1 < 0) return 1;
     int ret = 0;
@@ -133,9 +176,11 @@ int checkMoveLeft(Entity e){
     return ret;
 }
 
-// 0 if ok, 1 if not
-
-int checkMoveLowerLeft(Entity e){
+/*
+ * Will check if the entity can go Lower left
+ * 0 if yes, 1 otherwise
+ */
+ int checkMoveLowerLeft(Entity e){
     if (e.x -1 < 0)     return 1;
     if (e.y - 1 < 0)    return 1;
     int ret = 0;
@@ -151,8 +196,10 @@ int checkMoveLowerLeft(Entity e){
     return ret;
 }
 
-// 0 if ok, 1 if not
-
+/*
+ * Will check if the entity can go Down
+ * 0 if yes, 1 otherwise
+ */
 int checkMoveDown(Entity e){
     if (e.y - 1 < 0) return 1;
     int ret = 0;
@@ -163,8 +210,11 @@ int checkMoveDown(Entity e){
     return ret;
 }
 
-// 0 if she has moved, 1 otherwise
-int moveUp(Entity* e){
+/*
+ * Will move up the entity
+ * 0 if she moved, 1 otherwise
+ */
+ int moveUp(Entity* e){
     if (e->y + 4 > 127) return 1;
     if (checkMoveUp(*e) == 0){
         entityMod(*e, 0);
@@ -181,8 +231,10 @@ int moveUp(Entity* e){
     }
 }
 
-// 0 if she has moved, 1 otherwise
-int moveUpperLeft(Entity* e){
+/*
+ * Will move upper left the entity
+ * 0 if she moved, 1 otherwise
+ */int moveUpperLeft(Entity* e){
     if (e->x - 1  < 0)   return 1;
     if (e->y + 4  > 127) return 1;
     if (checkMoveUpperLeft(*e) == 0){
@@ -201,8 +253,11 @@ int moveUpperLeft(Entity* e){
     }
 }
 
-// 0 if she has moved, 1 otherwise
-int moveLeft(Entity* e){
+/*
+ * Will move left the entity
+ * 0 if she moved, 1 otherwise
+ */
+ int moveLeft(Entity* e){
     if (checkMoveLeft(*e) == 0){
         entityMod(*e, 0);
         e->x -= 1;
@@ -218,8 +273,11 @@ int moveLeft(Entity* e){
     }
 }
 
-// 0 if she has moved, 1 otherwise
-int moveLowerLeft(Entity* e){
+/*
+ * Will move lower Left the entity
+ * 0 if she moved, 1 otherwise
+ */
+ int moveLowerLeft(Entity* e){
     if (checkMoveLowerLeft(*e) == 0){
         entityMod(*e, 0);
         e->x -= 1;
@@ -236,8 +294,11 @@ int moveLowerLeft(Entity* e){
     }
 }
 
-// 0 if she has moved, 1 otherwise
-int moveDown(Entity* e){
+/*
+ * Will move down the entity
+ * 0 if she moved, 1 otherwise
+ */
+ int moveDown(Entity* e){
     if (checkMoveDown(*e) == 0){
         entityMod(*e, 0);
         e->y -= 1;
@@ -253,8 +314,36 @@ int moveDown(Entity* e){
     }
 }
 
-void init(){
+/*
+ * Global movement function for the entities
+ * Calculate the best option and move the entity
+ */
+void entityMovement(Entity* e){
+    if (e->y == 0 && e->x == 0) return;
+    if (e->y > azimuthY){
+        if (moveLowerLeft(e) != 0) {
+            if (moveDown(e) != 0) moveLeft(e);
+        }
+    }else if (e->y < azimuthY){
+        if (moveUpperLeft(e) != 0){
+            if (moveUp(e) != 0) moveLeft(e);
+        }
+    }else{
+        moveLeft(e);
+    }
+}
 
+/*********************************************
+ *                                           *
+ *               Field Functions             *
+ *                                           *
+ *********************************************/
+
+/*
+ * Initialise the whole field (only init values and walls)
+ * 0 if she moved, 1 otherwise
+ */
+void init(){
     // Global init
     for (int i = 0; i <512; i++){
         for (int j = 0; j < 128; j++){
@@ -286,6 +375,10 @@ void init(){
     }
 }
 
+/*
+ * Will print the field
+ * 0 if she moved, 1 otherwise
+ */
 void print(Field f){
     for (int j = 127; j >= 0; j--){
         for (int i = 0; i < 512; i++){
@@ -295,22 +388,9 @@ void print(Field f){
     }
 }
 
-void entityMovement(Entity* e){
-    if (e->y == 0 && e->x == 0) return;
-    if (e->y > azimuthY){
-        if (moveLowerLeft(e) != 0) {
-            if (moveDown(e) != 0) moveLeft(e);
-        }
-    }else if (e->y < azimuthY){
-        if (moveUpperLeft(e) != 0){
-            if (moveUp(e) != 0) moveLeft(e);
-        }
-    }else{
-        moveLeft(e);
-    }
-}
-
-// Will generate random entity
+/*
+ * Will generate an entity, optimized so we can place the new entity quickly
+ */
 void generateRandomEntity(int total, int current){
 
     int N1 = 0, M1 = 508, N2 = 0, M2 = 124;
@@ -331,7 +411,10 @@ void generateRandomEntity(int total, int current){
     list[initList++] = ret;
 }
 
-// Will generate randomly nb entities
+/*
+ * Will generate nb entities randomly placed on the field
+ * 0 if she moved, 1 otherwise
+ */
 void generateXRandomEntities(int nb){
     for (int i = 1; i <= nb; i++){
         generateRandomEntity(nb, i);
@@ -345,16 +428,6 @@ int end(){
         if ( (list[i].x != 0) || (list[i].y != 0) ) return 0;
     }
     return 1;
-}
-
-// Just use to know how many entities we have to create
-int power(int number){
-    int result = 1;
-    while(number > 0){
-        result *= 2;
-        number--;
-    }
-    return result;
 }
 
 void parser(int argc, char const *argv[]){
