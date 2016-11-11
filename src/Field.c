@@ -6,6 +6,7 @@
 #include <pthread.h>
 #include <math.h>
 #include <unistd.h>
+#include <semaphore.h> 
 
 /*
  * @author: Guillaume FILIOL DE RAIMOND-MICHEL, Thibaut GONNIN
@@ -622,7 +623,7 @@ void startField(int entityNumber, int printed){
 }
 
 
-void run_global(int printed,void (*function)(int),int arg){
+void run_global(int printed,void (*function)(void)){
     struct tm* tm_info1, *tm_info2, *tm_info3;
     if (bool_time == 1){
         double      timeInit, timeInitUser;
@@ -636,7 +637,7 @@ void run_global(int printed,void (*function)(int),int arg){
             timeInit                = ((double)clock())/CLOCKS_PER_SEC;
             timeInitUser            = time(NULL);
 
-            (*function)(arg);
+            (*function)();
 
             double time_in_seconds  =((double)clock())/CLOCKS_PER_SEC;
             timeT[i]                = time_in_seconds - timeInit;
@@ -661,7 +662,7 @@ void run_global(int printed,void (*function)(int),int arg){
 
     }
     else{
-        (*function)(arg);
+        (*function)();
     }
 }
 
@@ -717,7 +718,7 @@ void run_t1(){
     pthread_t t1[4];
 
     for (int i = 0; i < 4; i++){
-        if (pthread_create(&(t1[i]), NULL, t1_method, 4-i)) {
+        if (pthread_create(&(t1[i]), NULL, (void*)t1_method, 4-i)) {
             perror("pthread_create");
         }
         
@@ -734,12 +735,10 @@ void run_t2(){
     pthread_t t2[people];
 
     for (int i = 0; i < people; i++){
-        if (pthread_create(&(t2[i]), NULL, t2_method, i)) {
+        if (pthread_create(&(t2[i]), NULL, (void*)t2_method, i)) {
             perror("pthread_create");
         }
     }
-
-
 
     for (int i = 0; i < people; i++){
         if (pthread_join(t2[i], NULL)) {
@@ -761,14 +760,13 @@ int main(int argc, char const *argv[]){
         case 1:
             switch(thread){
                 case 0:
-                    run_global(0, run_t0, NULL);
+                    run_global(0, (void*)run_t0);
                     break;
-
                 case 1:
-                    run_global(0, run_t1, NULL);
+                    run_global(0, run_t1);
                     break;
                 case 2:
-                    run_global(0, run_t2, NULL);
+                    run_global(0, run_t2);
                     break;
             }
         break;
