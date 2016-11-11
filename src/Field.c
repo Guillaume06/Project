@@ -5,10 +5,11 @@
 #include <sys/resource.h>
 #include <pthread.h>
 #include <math.h>
+#include <unistd.h>
 
 /*
-** @author: Guillaume FILIOL DE RAIMOND-MICHEL, Thibaut GONNIN
-*/
+ * @author: Guillaume FILIOL DE RAIMOND-MICHEL, Thibaut GONNIN
+ */
 
 // Typedefs
 typedef int Field[512][128];
@@ -19,14 +20,8 @@ typedef struct Entity{
 
 // Global definitions
 Field f;
-int people;
-int thread;
-int t = 0;
-int azimuthY = 63;
+int people, thread, t = 0, azimuthY = 63, initList = 0, bool_time = 0, etape=0;
 Entity list[512];
-int initList = 0;
-int bool_time = 0;
-int etape=0;
 double timeTmp;
 
 // Movement functions
@@ -34,18 +29,18 @@ double timeTmp;
 // 0 for delete, 1 for add
 void entityMod(Entity e, int mod){
     for (int i = 0; i <= 3; i++){
-        f[e.x+i][e.y] = mod;
-        f[e.x][e.y+i] = mod;
+        f[e.x+i][e.y]   = mod;
+        f[e.x]  [e.y+i] = mod;
         f[e.x+i][e.y+i] = mod;
     }
-    f[e.x+1][e.y+2] = mod;
-    f[e.x+2][e.y+1] = mod;
+    f[e.x+1][e.y+2]     = mod;
+    f[e.x+2][e.y+1]     = mod;
 
-    f[e.x+3][e.y+1] = mod;
-    f[e.x+1][e.y+3] = mod;
+    f[e.x+3][e.y+1]     = mod;
+    f[e.x+1][e.y+3]     = mod;
 
-    f[e.x+3][e.y+2] = mod;
-    f[e.x+2][e.y+3] = mod;
+    f[e.x+3][e.y+2]     = mod;
+    f[e.x+2][e.y+3]     = mod;
 }
 
 // Will check if the entity can be placed here
@@ -53,31 +48,45 @@ int entityCheck(Entity e){
     if (e.x > 511) return 1;
     if (e.y > 127) return 1;
     for (int i = 0; i <= 3; i++){
-        if (f[e.x+i][e.y] != 0) return 1;
-        if (f[e.x][e.y+i] != 0) return 1;
-        if (f[e.x+i][e.y+i] != 0) return 1;
+        if (f[e.x+i][e.y] != 0)     return 1;
+        if (f[e.x]  [e.y+i] != 0)   return 1;
+        if (f[e.x+i][e.y+i] != 0)   return 1;
     }
-    if (f[e.x+1][e.y+2] != 0) return 1;
+    if (f[e.x+1][e.y+2] != 0)       return 1;
     if (f[e.x+2][e.y+1] != 0);
 
-    if (f[e.x+3][e.y+1]) return 1;
-    if (f[e.x+1][e.y+3]) return 1;
+    if (f[e.x+3][e.y+1])            return 1;
+    if (f[e.x+1][e.y+3])            return 1;
 
-    if (f[e.x+3][e.y+2]) return 1;
-    if (f[e.x+2][e.y+3]) return 1;
+    if (f[e.x+3][e.y+2])            return 1;
+    if (f[e.x+2][e.y+3])            return 1;
     return 0;
 }
 
 // http://www.commentcamarche.net/forum/affich-1063120-debutant-en-c-trier-tableau
-void triCroissant(double tableau[], long tailleTableau){
+void triCroissantDouble(double tableau[], long tailleTableau){
+    long i,t,k=0;
+
+    for(t = 1; t < tailleTableau; t++){
+        for(i = 0; i < tailleTableau - 1; i++){
+            if(tableau[i] > tableau[i+1]){
+                k                = tableau[i] - tableau[i+1];
+                tableau[i]      -= k;
+                tableau[i+1]    += k;
+            }
+        }
+    }
+}
+
+void triCroissantInt(long int tableau[], long tailleTableau){
     long i,t,k=0;
 
     for(t = 1; t < tailleTableau; t++){
         for(i=0; i < tailleTableau - 1; i++){
             if(tableau[i] > tableau[i+1]){
-                k= tableau[i] - tableau[i+1];
-                tableau[i] -= k;
-                tableau[i+1] += k;
+                k                = tableau[i] - tableau[i+1];
+                tableau[i]      -= k;
+                tableau[i+1]    += k;
             }
         }
     }
@@ -87,28 +96,28 @@ void triCroissant(double tableau[], long tailleTableau){
 int checkMoveUp(Entity e){
     if (e.y + 4 > 127) return 1;
     int ret = 0;
-    if ((f[e.x][e.y+4] != 0) && (f[e.x][e.y+4] != 3)) ret = 1;
-    if ((f[e.x+1][e.y+4] != 0) && (f[e.x+1][e.y+4] != 3)) ret = 1;
-    if ((f[e.x+2][e.y+4] != 0) && (f[e.x+2][e.y+4] != 3)) ret = 1;
-    if ((f[e.x+3][e.y+4] != 0) && (f[e.x+3][e.y+4] != 3)) ret = 1;
+    if ((f[e.x]  [e.y+4] != 0)  && (f[e.x]  [e.y+4] != 3))  ret = 1;
+    if ((f[e.x+1][e.y+4] != 0)  && (f[e.x+1][e.y+4] != 3))  ret = 1;
+    if ((f[e.x+2][e.y+4] != 0)  && (f[e.x+2][e.y+4] != 3))  ret = 1;
+    if ((f[e.x+3][e.y+4] != 0)  && (f[e.x+3][e.y+4] != 3))  ret = 1;
     return ret;
 }
 
 // 0 if ok, 1 if not
 
 int checkMoveUpperLeft(Entity e){
-    if (e.x - 1 < 0) return 1;
-    if (e.y + 4 > 127) return 1;
+    if (e.x - 1 < 0)    return 1;
+    if (e.y + 4 > 127)  return 1;
     int ret = 0;
-    if ((f[e.x][e.y+4] != 0) && (f[e.x][e.y+4] != 3)) ret = 1;
-    if ((f[e.x+1][e.y+4] != 0) && (f[e.x+1][e.y+4] != 3)) ret = 1;
-    if ((f[e.x+2][e.y+4] != 0) && (f[e.x+2][e.y+4] != 3)) ret = 1;
+    if ((f[e.x]  [e.y+4] != 0)  && (f[e.x]  [e.y+4] != 3))  ret = 1;
+    if ((f[e.x+1][e.y+4] != 0)  && (f[e.x+1][e.y+4] != 3))  ret = 1;
+    if ((f[e.x+2][e.y+4] != 0)  && (f[e.x+2][e.y+4] != 3))  ret = 1;
 
-    if ((f[e.x-1][e.y] != 0) && (f[e.x-1][e.y] != 3)) ret = 1;
-    if ((f[e.x-1][e.y+1] != 0) && (f[e.x-1][e.y+1] != 3)) ret = 1;
-    if ((f[e.x-1][e.y+2] != 0) && (f[e.x-1][e.y+2] != 3)) ret = 1;
+    if ((f[e.x-1][e.y]   != 0)  && (f[e.x-1][e.y]   != 3))  ret = 1;
+    if ((f[e.x-1][e.y+1] != 0)  && (f[e.x-1][e.y+1] != 3))  ret = 1;
+    if ((f[e.x-1][e.y+2] != 0)  && (f[e.x-1][e.y+2] != 3))  ret = 1;
 
-    if ((f[e.x-1][e.y+4] != 0) && (f[e.x-1][e.y+4] != 3)) ret = 1;
+    if ((f[e.x-1][e.y+4] != 0)  && (f[e.x-1][e.y+4] != 3))  ret = 1;
     return ret;
 }
 
@@ -117,28 +126,28 @@ int checkMoveUpperLeft(Entity e){
 int checkMoveLeft(Entity e){
     if (e.x -1 < 0) return 1;
     int ret = 0;
-    if ((f[e.x-1][e.y] != 0) && (f[e.x-1][e.y] != 3)) ret = 1;
-    if ((f[e.x-1][e.y+1] != 0) && (f[e.x-1][e.y+1] != 3)) ret = 1;
-    if ((f[e.x-1][e.y+2] != 0) && (f[e.x-1][e.y+2] != 3)) ret = 1;
-    if ((f[e.x-1][e.y+3] != 0) && (f[e.x-1][e.y+3] != 3)) ret = 1;
+    if ((f[e.x-1][e.y]   != 0)  && (f[e.x-1][e.y]   != 3))  ret = 1;
+    if ((f[e.x-1][e.y+1] != 0)  && (f[e.x-1][e.y+1] != 3))  ret = 1;
+    if ((f[e.x-1][e.y+2] != 0)  && (f[e.x-1][e.y+2] != 3))  ret = 1;
+    if ((f[e.x-1][e.y+3] != 0)  && (f[e.x-1][e.y+3] != 3))  ret = 1;
     return ret;
 }
 
 // 0 if ok, 1 if not
 
 int checkMoveLowerLeft(Entity e){
-    if (e.x -1 < 0) return 1;
-    if (e.y - 1 < 0) return 1;
+    if (e.x -1 < 0)     return 1;
+    if (e.y - 1 < 0)    return 1;
     int ret = 0;
-    if ((f[e.x][e.y-1] != 0) && (f[e.x][e.y-1] != 3)) ret = 1;
-    if ((f[e.x+1][e.y-1] != 0) && (f[e.x+1][e.y-1] != 3)) ret = 1;
-    if ((f[e.x+2][e.y-1] != 0) && (f[e.x+2][e.y-1] != 3)) ret = 1;
+    if ((f[e.x]  [e.y-1] != 0)  && (f[e.x]  [e.y-1] != 3))  ret = 1;
+    if ((f[e.x+1][e.y-1] != 0)  && (f[e.x+1][e.y-1] != 3))  ret = 1;
+    if ((f[e.x+2][e.y-1] != 0)  && (f[e.x+2][e.y-1] != 3))  ret = 1;
 
-    if ((f[e.x-1][e.y] != 0) && (f[e.x-1][e.y] != 3)) ret = 1;
-    if ((f[e.x-1][e.y+1] != 0) && (f[e.x-1][e.y+1] != 3)) ret = 1;
-    if ((f[e.x-1][e.y+2] != 0) && (f[e.x-1][e.y+2] != 3)) ret = 1;
+    if ((f[e.x-1][e.y]   != 0)  && (f[e.x-1][e.y]   != 3))  ret = 1;
+    if ((f[e.x-1][e.y+1] != 0)  && (f[e.x-1][e.y+1] != 3))  ret = 1;
+    if ((f[e.x-1][e.y+2] != 0)  && (f[e.x-1][e.y+2] != 3))  ret = 1;
 
-    if ((f[e.x-1][e.y-1] != 0) && (f[e.x-1][e.y-1] != 3)) ret = 1;
+    if ((f[e.x-1][e.y-1] != 0)  && (f[e.x-1][e.y-1] != 3))  ret = 1;
     return ret;
 }
 
@@ -147,10 +156,10 @@ int checkMoveLowerLeft(Entity e){
 int checkMoveDown(Entity e){
     if (e.y - 1 < 0) return 1;
     int ret = 0;
-    if ((f[e.x][e.y-1] != 0) && (f[e.x][e.y-1] != 3)) ret = 1;
-    if ((f[e.x+1][e.y-1] != 0) && (f[e.x+1][e.y-1] != 3)) ret = 1;
-    if ((f[e.x+2][e.y-1] != 0) && (f[e.x+2][e.y-1] != 3)) ret = 1;
-    if ((f[e.x+2][e.y-1] != 0) && (f[e.x+3][e.y-1] != 3)) ret = 1;
+    if ((f[e.x]  [e.y-1] != 0)  && (f[e.x]  [e.y-1] != 3))  ret = 1;
+    if ((f[e.x+1][e.y-1] != 0)  && (f[e.x+1][e.y-1] != 3))  ret = 1;
+    if ((f[e.x+2][e.y-1] != 0)  && (f[e.x+2][e.y-1] != 3))  ret = 1;
+    if ((f[e.x+2][e.y-1] != 0)  && (f[e.x+3][e.y-1] != 3))  ret = 1;
     return ret;
 }
 
@@ -159,13 +168,13 @@ int moveUp(Entity* e){
     if (e->y + 4 > 127) return 1;
     if (checkMoveUp(*e) == 0){
         entityMod(*e, 0);
-        e->y+=1;
+        e->y += 1;
         if (f[e->x][e->y] != 3){
             entityMod(*e, 1);
         }else{
-                     e->y = 0;
-                     e->x = 0;
-                 }
+            e->y = 0;
+            e->x = 0;
+        }
         return 0;
     }else{
         return 1;
@@ -174,18 +183,18 @@ int moveUp(Entity* e){
 
 // 0 if she has moved, 1 otherwise
 int moveUpperLeft(Entity* e){
-    if (e->x- 1 < 0) return 1;
-    if (e->y + 4 > 127) return 1;
+    if (e->x - 1  < 0)   return 1;
+    if (e->y + 4  > 127) return 1;
     if (checkMoveUpperLeft(*e) == 0){
         entityMod(*e, 0);
-        e->x-=1;
-        e->y+=1;
+        e->x -= 1;
+        e->y += 1;
         if (f[e->x][e->y] != 3){
             entityMod(*e, 1);
         }else{
-                     e->y = 0;
-                     e->x = 0;
-                 }
+            e->y = 0;
+            e->x = 0;
+        }
         return 0;
     }else{
         return 1;
@@ -196,13 +205,13 @@ int moveUpperLeft(Entity* e){
 int moveLeft(Entity* e){
     if (checkMoveLeft(*e) == 0){
         entityMod(*e, 0);
-        e->x-=1;
+        e->x -= 1;
         if (f[e->x][e->y] != 3){
             entityMod(*e, 1);
         }else{
-                     e->y = 0;
-                     e->x = 0;
-                 }
+            e->y = 0;
+            e->x = 0;
+        }
         return 0;
     }else{
         return 1;
@@ -213,14 +222,14 @@ int moveLeft(Entity* e){
 int moveLowerLeft(Entity* e){
     if (checkMoveLowerLeft(*e) == 0){
         entityMod(*e, 0);
-        e->x-=1;
-        e->y-=1;
+        e->x -= 1;
+        e->y -= 1;
         if (f[e->x][e->y] != 3){
             entityMod(*e, 1);
         }else{
-                     e->y = 0;
-                     e->x = 0;
-                 }
+            e->y = 0;
+            e->x = 0;
+        }
         return 0;
     }else{
         return 1;
@@ -231,7 +240,7 @@ int moveLowerLeft(Entity* e){
 int moveDown(Entity* e){
     if (checkMoveDown(*e) == 0){
         entityMod(*e, 0);
-        e->y-=1;
+        e->y -= 1;
         if (f[e->x][e->y] != 3){
             entityMod(*e, 1);
         }else{
@@ -247,14 +256,14 @@ int moveDown(Entity* e){
 void init(){
 
     // Global init
-    for (int i = 0; i<512; i++){
-        for (int j = 0; j< 128; j++){
+    for (int i = 0; i <512; i++){
+        for (int j = 0; j < 128; j++){
             f[i][j] = 0;
         }
     }
 
     // Left wall + exit init
-    for (int j = 0; j <16; j++){
+    for (int j = 0; j < 16; j++){
         for (int i=0; i <= 59 ; i++){
             f[j][i] = 2;
         }
@@ -262,24 +271,24 @@ void init(){
             f[j][i] = 2;
         }
     }
-    for (int i=60; i <=  67 ; i++){
+    for (int i = 60; i <= 67; i++){
         f[0][i] = 3;
     }
 
     // Right wall init
-        for (int j = 0; j< 16; j++){
-        for (int i=0; i< 56 ; i++){
-        f[128+j+16][i] = 2;
+    for (int j = 0; j < 16; j++){
+        for (int i = 0; i < 56; i++){
+        f[128 + j + 16][i] = 2;
         }
-        for (int i=72; i< 128 ; i++){
-            f[128+j+16][i] = 2;
+        for (int i = 72; i < 128; i++){
+            f[128 + j + 16][i] = 2;
         }
     }
 }
 
 void print(Field f){
     for (int j = 127; j >= 0; j--){
-        for (int i = 0; i< 512; i++){
+        for (int i = 0; i < 512; i++){
             printf("%d", f[i][j]);
         }
         printf("\n");
@@ -287,7 +296,7 @@ void print(Field f){
 }
 
 void entityMovement(Entity* e){
-    if (e->y == 0 && e->x == 0)return;
+    if (e->y == 0 && e->x == 0) return;
     if (e->y > azimuthY){
         if (moveLowerLeft(e) != 0) {
             if (moveDown(e) != 0) moveLeft(e);
@@ -305,21 +314,18 @@ void entityMovement(Entity* e){
 void generateRandomEntity(int total, int current){
 
     int N1 = 0, M1 = 508, N2 = 0, M2 = 124;
-
     int randomX = M1 + rand() / (RAND_MAX / (N1 - M1 + 1) + 1);
     int randomY = M2 + rand() / (RAND_MAX / (N2 - M2 + 1) + 1);
-
 
     Entity ret;
     ret.x = randomX;
     ret.y = randomY;
 
     while (entityCheck(ret) != 0){
-
         randomX = M1 + rand() / (RAND_MAX / (N1 - M1 + 1) + 1);
         randomY = M2 + rand() / (RAND_MAX / (N2 - M2 + 1) + 1);
-        ret.x = randomX;
-        ret.y = randomY;
+        ret.x   = randomX;
+        ret.y   = randomY;
     }
     entityMod(ret, 1);
     list[initList++] = ret;
@@ -327,7 +333,6 @@ void generateRandomEntity(int total, int current){
 
 // Will generate randomly nb entities
 void generateXRandomEntities(int nb){
-
     for (int i = 1; i <= nb; i++){
         generateRandomEntity(nb, i);
     }
@@ -342,10 +347,10 @@ int end(){
     return 1;
 }
 
-//just use to know how many entities we have to create
+// Just use to know how many entities we have to create
 int power(int number){
     int result = 1;
-    while(number>0){
+    while(number > 0){
         result *= 2;
         number--;
     }
@@ -357,7 +362,7 @@ void parser(int argc, char const *argv[]){
     for (int i = 1; i < argc; ++i){
         if (*argv[i]++ == '-'){
 
-            if(*argv[i]=='p'){
+            if(*argv[i] == 'p'){
                 number = argv[i][1]-'0';
                 if(0 <= number && number < 10 && strlen(argv[i]) == 2)
                     people = power(number);
@@ -403,71 +408,69 @@ void startField(int entityNumber, int printed){
 
 
 void run_global(int printed,void (*function)(int),int arg){
+    struct tm* tm_info1, *tm_info2, *tm_info3;
     if (bool_time == 1){
-        int timeInit;
-        int timeInitUser;
-        double timeT[5];
-        long int timeUser[5];
-        int size[5];
-        double response[5];
-        struct rusage rUsage;
+        double      timeInit, timeInitUser;
+        double      timeT[5];
+        double      size[5];
+        time_t      timeUser[5];
+        struct      rusage rUsage;
         for(int i = 0; i< 5; i++){
-            getrusage(1, &rUsage);
-            timeInitUser = rUsage.ru_utime.tv_usec;
-            timeInit = (double)clock()/(double)CLOCKS_PER_SEC;
             startField(people, 0);
-            timeInit = (double)clock()/(double)CLOCKS_PER_SEC - timeInit;
-            timeInitUser = rUsage.ru_utime.tv_usec - timeInitUser;
-            getrusage(1, &rUsage);
-            
+
+            timeInit                = ((double)clock())/CLOCKS_PER_SEC;
+            timeInitUser            = time(NULL);
+
             (*function)(arg);
-            
-            double time_in_seconds=(double)clock()/(double)CLOCKS_PER_SEC;
-            timeT[i] = time_in_seconds - timeTmp - timeInit;
-            timeTmp = time_in_seconds;
+
+            double time_in_seconds  =((double)clock())/CLOCKS_PER_SEC;
+            timeT[i]                = time_in_seconds - timeInit;
             getrusage(1, &rUsage);
-            size[i]=rUsage.ru_maxrss;
-            timeUser[i]=rUsage.ru_utime.tv_usec - timeInitUser;
+            size[i]                 = rUsage.ru_maxrss;
+            timeUser[i]             = time(NULL) - timeInitUser;
         }
+        tm_info1                    = localtime(&timeUser[1]);
+        tm_info2                    = localtime(&timeUser[2]);
+        tm_info3                    = localtime(&timeUser[3]);
+        tm_info1->tm_sec           += tm_info2->tm_sec;
+        tm_info1->tm_sec           += tm_info3->tm_sec;
+        tm_info1->tm_sec           /= 3;
 
 
-        triCroissant(&timeT, 5);
-        triCroissant(&size, 5);
-        triCroissant(&timeUser, 5);
-        printf ("Average CPU time used : %lf\n", (timeT[1]+timeT[2]+timeT[3])/3);
-        printf ("Average user time used : %lf\n", (timeUser[1]+timeUser[2]+timeUser[3])/3);
-        printf("Average max resident set size : %d\n", (size[1]+size[2]+size[3])/3);
+        triCroissantDouble(timeT, 5);
+        triCroissantDouble(size, 5);
+        triCroissantInt(timeUser, 5);
+        printf("Average CPU time used           : %f secondes\n",                  (timeT[1]+timeT[2]+timeT[3])/3);
+        printf("Average user time used          : %d secondes\n",                  tm_info1-> tm_sec);
+        printf("Average max resident set size   : %f kb\n",                        (size[1]+size[2]+size[3])/3);
 
     }
     else{
-            (*function)(arg);
+        (*function)(arg);
     }
-        
 }
 
 /*
-**function used for a thread in the t1 case
-*/
+ *function used for a thread in the t1 case
+ */
 void *t1_method(int area){
 
     while (end() == 0){
         for (int j = 0; j< people; j++){
             if ((list[j].x != 0) && (list[j].y != 0)){
-                if ((list[j].x <= area*128) && (list[j].x <= area*128+127)){
+                if ((list[j].x <= area*128) && (list[j].x <= area*128 + 127)){
                     entityMovement(&list[j]);
-
                 }
             }
         }
 
     }
-
     pthread_exit(NULL);
 }
 
 /*
-**function used for a thread in the t2 case
-*/
+ *function used for a thread in the t2 case
+ */
 void *t2_method(int rank){
     
     while (list[rank].x != 0){
@@ -482,19 +485,19 @@ void *t2_method(int rank){
 */
 void run_t0(int printed){
     while (end() == 0){
-        for (int j = 0; j< people; j++){
+        for (int j = 0; j < people; j++){
             if (list[j].x != 0 && list[j].y != 0){
                 entityMovement(&list[j]);
             }
         }
-        if (printed == 1)printf("\n");
-        if (printed == 1)print(f);
+        if (printed == 1) printf("\n");
+        if (printed == 1) print(f);
     }
 }
 
 /*
-**general method for t1
-*/
+ *general method for t1
+ */
 void run_t1(){
     pthread_t t1[4];
 
@@ -514,7 +517,6 @@ void run_t1(){
 */
 void run_t2(){
     pthread_t t2[people];
-                  
 
     for (int i = 0; i < people; i++){
         if (pthread_create(&(t2[i]), NULL, t2_method, i)) {
@@ -544,14 +546,14 @@ int main(int argc, char const *argv[]){
         case 1:
             switch(thread){
                 case 0:
-                    run_global(0,run_t0,NULL);    
+                    run_global(0, run_t0, NULL);
                     break;
 
                 case 1:
-                    run_global(0,run_t1,NULL);
+                    run_global(0, run_t1, NULL);
                     break;
                 case 2:
-                    run_global(0,run_t2,NULL);
+                    run_global(0, run_t2, NULL);
                     break;
             }
         break;
