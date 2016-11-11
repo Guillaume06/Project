@@ -16,16 +16,157 @@
  *        Global Definitions                 *
  *                                           *
  *********************************************/
-typedef int Field[512][128];
+typedef int Field       [512][128];
+typedef int Semaphore   [512][128];
 typedef struct Entity{
     int x;
     int y;
 }Entity;
 
 Field f;
+Semaphore s;
 int people, thread, t = 0, azimuthY = 63, initList = 0, bool_time = 0, etape=0;
 Entity list[512];
 double timeTmp;
+
+/*********************************************
+ *                                           *
+ *            Semaphore Functions            *
+ *                                           *
+ *********************************************/
+
+/*
+ * Will initialize the semaphore
+ */
+ void initSemaphore(){
+    for (int i = 0; i <512; i++){
+         for (int j = 0; j < 128; j++){
+             s[i][j] = 0;
+         }
+    }
+ }
+
+/*
+ * Will lock the target semaphore
+ */
+ void up(int x, int y){
+    while (s[x][y] != 0);
+    s[x][y] = 1;
+ }
+
+/*
+ * Will unlock the target semaphore
+ */
+ void down(int x, int y){
+    s[x][y] = 0;
+ }
+
+ /*
+  * Will lock the lower part of the entity
+  */
+ void upMovementDown(int x, int y){
+    up(x    , y - 1);
+    up(x + 1, y - 1);
+    up(x + 2, y - 1);
+    up(x + 3, y - 1);
+ }
+
+ /*
+  * Will lock the upper part of the entity
+  */
+ void upMovementUp(int x, int y){
+    up(x    , y - 4);
+    up(x + 1, y - 4);
+    up(x + 2, y - 4);
+    up(x + 3, y - 4);
+ }
+
+ /*
+  * Will lock the left part of the entity
+  */
+ void upMovementLeft(int x, int y){
+    up(x - 1, y     );
+    up(x - 1, y + 1);
+    up(x - 1, y + 2);
+    up(x - 1, y + 3);
+ }
+/*
+ * Will lock the place needed for the movement algorithm
+ */
+ void upMovement(int x, int y){
+    up(x, y);
+    for (int i = 1; i <= 3; i++){
+        up(x + i, y     );
+        up(x    , y + i);
+        up(x + i, y + i);
+    }
+    up (x + 1, y + 2);
+    up (x + 2, y + 1);
+    up (x + 3, y + 1);
+    up (x + 1, y + 3);
+    up (x + 3, y + 2);
+    up (x + 2, y + 3);
+
+    upMovementDown  (x, y);
+    upMovementLeft  (x, y);
+    upMovementUp    (x, y);
+    up(x - 1, y  + 4);
+    up(x - 1, y  - 1);
+ }
+
+  /*
+   * Will unlock the lower part of the entity
+   */
+  void downMovementDown(int x, int y){
+     down(x    , y - 1);
+     down(x + 1, y - 1);
+     down(x + 2, y - 1);
+     down(x + 3, y - 1);
+  }
+
+  /*
+   * Will unlock the upper part of the entity
+   */
+  void downMovementUp(int x, int y){
+     down(x    , y - 4);
+     down(x + 1, y - 4);
+     down(x + 2, y - 4);
+     down(x + 3, y - 4);
+  }
+
+  /*
+   * Will unlock the left part of the entity
+   */
+  void downMovementLeft(int x, int y){
+     down(x - 1, y     );
+     down(x - 1, y + 1);
+     down(x - 1, y + 2);
+     down(x - 1, y + 3);
+  }
+
+ /*
+  * Will unlock the place needed for the movement algorithm
+  */
+  void downMovement(int x, int y){
+     down(x, y);
+     for (int i = 1; i <= 3; i++){
+         down(x + i , y     );
+         down(x     , y + i );
+         down(x + i , y + i );
+     }
+     down(x + 1, y + 2);
+     down(x + 2, y + 1);
+     down(x + 3, y + 1);
+     down(x + 1, y + 3);
+     down(x + 3, y + 2);
+     down(x + 2, y + 3);
+
+     downMovementDown  (x, y);
+     downMovementLeft  (x, y);
+     downMovementUp    (x, y);
+     down(x - 1, y  + 4);
+     down(x - 1, y  - 1);
+  }
 
 /*********************************************
  *                                           *
@@ -69,6 +210,7 @@ double timeTmp;
  }
 
  /*
+
   * Will calculate 2 power number
   * needed so we can know how many entity we needed to know
   */
