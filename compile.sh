@@ -1,3 +1,4 @@
 #!/usr/bin/env bash
 #  @author : GONNIN THIBAUT, FILIOL DE RAIMOND-MICHEL Guillaume
-gcc -Wall --std=c99 src/Field.c -o bin/Field -lpthread
+ABSOLUTE_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+gcc -Wall --std=c99 $ABSOLUTE_PATH/src/Field.c -o $ABSOLUTE_PATH/bin/Field -lpthread
