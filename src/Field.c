@@ -584,7 +584,7 @@ void parser(int argc, char const *argv[]){
                 number = argv[i][1]-'0';
                 if(0 <= number && number < 10 && strlen(argv[i]) == 2){
                     people = power(number);
-                    printf("people = %d\n",people );
+                    //printf("people = %d\n",people );
                   
                 }
                 else
@@ -594,7 +594,7 @@ void parser(int argc, char const *argv[]){
                 number = argv[i][1]-'0';
                 if(0 <= number && number < 3 && strlen(argv[i]) == 2){
                     thread = number;
-                    printf("thread = %d\n",thread );
+                    //printf("thread = %d\n",thread );
                 
                 }
 
@@ -608,7 +608,7 @@ void parser(int argc, char const *argv[]){
                 number = argv[i][1]-'0';
                 if(1 <= number && number < 4 && strlen(argv[i]) == 2){
                     etape = number;
-                    printf("etape = %d\n",etape );
+                    //printf("etape = %d\n",etape );
                 }
 
                 else
@@ -759,16 +759,37 @@ void run_t2(){
 }
 
 /*
+ *function used for a thread in the t1 case
+ */
+void *t1_method_semaphore(int area){
+
+    while (end() == 0){
+        for (int j = 0; j< people; j++){
+            int xi=list[j].x;
+            int yi=list[j].y;
+            if ((xi != 0) && (yi != 0)){
+                if ((xi <= area*128) && (xi <= area*128 + 127)){
+                  upMovement(xi, yi);
+                  entityMovement(&list[j]);
+                  downMovement(xi, yi);
+                }
+            }
+        }
+
+    }
+    pthread_exit(NULL);
+}
+
+/*
 **general method for t1 with semaphores
 */
 void run_t1_semaphore(){
     pthread_t t1[4];
 
     for (int i = 0; i < 4; i++){
-        if (pthread_create(&(t1[i]), NULL, (void*)t1_method, 4-i)) {
+        if (pthread_create(&(t1[i]), NULL, (void*)t1_method_semaphore, 4-i)) {
             perror("pthread_create");
         }
-        
         if (pthread_join(t1[i], NULL)) {
             perror("pthread_join");
         }                                            
@@ -797,12 +818,15 @@ void run_t2_semaphore(){
     for (int i = 0; i < people; i++){
       if (pthread_create(&(t2[i]), NULL, (void*)t2_method_semaphore, i)) {
             perror("pthread_create");
-          }
-      //printf("in thread %d\n", i);
+      }
     }
 
+    for (int i = 0; i < people; i++){
+      if (pthread_join(t2[i], NULL)) {
+        perror("pthread_join");
+      }        
+    }
 }
-
 
 int main(int argc, char const *argv[]){
 
@@ -812,37 +836,37 @@ int main(int argc, char const *argv[]){
     
     startField(people,0);
     switch(etape){
-        case 1:
-            switch(thread){
-                case 0:
-                    run_global(0, (void*)run_t0);
-                    break;
-                case 1:
-                    run_global(0, run_t1);
-                    break;
-                case 2:
-                    run_global(0, run_t2);
-                    break;
-            }
-        break;
+      case 1:
+          switch(thread){
+              case 0:
+                  run_global(0, (void*)run_t0);
+                  break;
+              case 1:
+                  run_global(0, run_t1);
+                  break;
+              case 2:
+                  run_global(0, run_t2);
+                  break;
+          }
+      break;
 
-        case 2:
-            switch(thread){
-                case 0:
-                    run_global(0, (void*)run_t0);
-                    break;
-                case 1:
-                    run_global(0, run_t1_semaphore);
-                    break;
-                case 2:
-                    run_global(0, run_t2_semaphore);
-                    break;
-            }        
-        break;
+      case 2:
+          switch(thread){
+              case 0:
+                  run_global(0, (void*)run_t0);
+                  break;
+              case 1:
+                  run_global(0, run_t1_semaphore);
+                  break;
+              case 2:
+                  run_global(0, run_t2_semaphore);
+                  break;
+          }        
+      break;
 
-        case 3:
+      case 3:
         printf("not implemented yet\n" );
-        break;        
+      break;        
     }
 
     return 0;
