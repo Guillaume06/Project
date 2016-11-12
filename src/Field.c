@@ -28,6 +28,7 @@ Field f;
 Semaphore s;
 int people, thread, t = 0, azimuthY = 63, initList = 0, bool_time = 0, etape=0;
 Entity list[512];
+int entitySemaphore[512];
 double timeTmp;
 
 /*********************************************
@@ -41,6 +42,7 @@ double timeTmp;
  */
  void initSemaphore(){
     for (int i = 0; i <512; i++){
+         entitySemaphore[i] = 0;
          for (int j = 0; j < 128; j++){
              s[i][j] = 0;
          }
@@ -55,11 +57,27 @@ double timeTmp;
     s[x][y] = 1;
  }
 
+ /*
+  * Will lock the target entity
+  */
+  void upEntity(int x){
+     while (entitySemaphore[x] != 0);
+     entitySemaphore[x] = 1;
+  }
+
+
 /*
  * Will unlock the target semaphore
  */
  void down(int x, int y){
     s[x][y] = 0;
+ }
+
+/*
+ * Will unlock the target entity
+ */
+ void downEntity(int x){
+    entitySemaphore[x] = 0;
  }
 
  /*
