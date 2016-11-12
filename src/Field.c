@@ -18,7 +18,7 @@
  *                                           *
  *********************************************/
 typedef int Field       [512][128];
-typedef int Semaphore   [512][128];
+typedef sem_t Semaphore   [512][128];
 typedef struct Entity{
     int x;
     int y;
@@ -26,9 +26,8 @@ typedef struct Entity{
 
 Field f;
 Semaphore s;
-int people, thread, t = 0, azimuthY = 63, initList = 0, bool_time = 0, etape=0;
+int people, thread, t = 0, azimuthY = 63, initList = 0, bool_time = 0, etape=1;
 Entity list[512];
-int entitySemaphore[512];
 double timeTmp;
 
 /*********************************************
@@ -42,9 +41,8 @@ double timeTmp;
  */
  void initSemaphore(){
     for (int i = 0; i <512; i++){
-         entitySemaphore[i] = 0;
          for (int j = 0; j < 128; j++){
-             s[i][j] = 0;
+             sem_init(&s[i][j],0,0);
          }
     }
  }
@@ -53,32 +51,18 @@ double timeTmp;
  * Will lock the target semaphore
  */
  void up(int x, int y){
-    while (s[x][y] != 0);
-    s[x][y] = 1;
+    sem_post(&s[x][y]);
  }
 
- /*
-  * Will lock the target entity
-  */
-  void upEntity(int x){
-     while (entitySemaphore[x] != 0);
-     entitySemaphore[x] = 1;
-  }
 
 
 /*
  * Will unlock the target semaphore
  */
  void down(int x, int y){
-    s[x][y] = 0;
+    sem_wait(&s[x][y]);
  }
 
-/*
- * Will unlock the target entity
- */
- void downEntity(int x){
-    entitySemaphore[x] = 0;
- }
 
  /*
   * Will lock the lower part of the entity
@@ -598,15 +582,22 @@ void parser(int argc, char const *argv[]){
 
             if(*argv[i] == 'p'){
                 number = argv[i][1]-'0';
-                if(0 <= number && number < 10 && strlen(argv[i]) == 2)
+                if(0 <= number && number < 10 && strlen(argv[i]) == 2){
                     people = power(number);
+                    printf("people = %d\n",people );
+                  
+                }
                 else
                     printf("%s\n","Issue with the number given with the parameters -p. This number should be between 0 and 9" );
             }
             else if(*argv[i]=='t'){
                 number = argv[i][1]-'0';
-                if(0 <= number && number < 3 && strlen(argv[i]) == 2)
+                if(0 <= number && number < 3 && strlen(argv[i]) == 2){
                     thread = number;
+                    printf("thread = %d\n",thread );
+                
+                }
+
                 else
                     printf("%s\n","Issue with the number given with the parameters -t. This number should be 0,1 or 2" );
             }
@@ -615,18 +606,21 @@ void parser(int argc, char const *argv[]){
             }
             else if (*argv[i]=='e'){
                 number = argv[i][1]-'0';
-                if(1 <= number && number < 4 && strlen(argv[i]) == 2)
+                if(1 <= number && number < 4 && strlen(argv[i]) == 2){
                     etape = number;
+                    printf("etape = %d\n",etape );
+                }
+
                 else
                     printf("%s\n","Issue with the number given with the parameters -e. This number should be 1,2 or 3" );                
 
             }
             else{
-                printf("%s\n","you didn't give a good parameters(-t -m or -p)");
+                printf("%s\n","you didn't give a good parameters(-t, -e, -m or -p)");
             }
         }
         else{
-            printf("%s\n","you didn't give a good parameters(-t -m or -p)");
+            printf("%s\n","you didn't give a good parameters(-t, -e, -m or -p)");
 
         }
     }
@@ -739,7 +733,6 @@ void run_t1(){
         if (pthread_create(&(t1[i]), NULL, (void*)t1_method, 4-i)) {
             perror("pthread_create");
         }
-        
         if (pthread_join(t1[i], NULL)) {
             perror("pthread_join");
         }                                            
@@ -765,6 +758,50 @@ void run_t2(){
     } 
 }
 
+/*
+**general method for t1 with semaphores
+*/
+void run_t1_semaphore(){
+    pthread_t t1[4];
+
+    for (int i = 0; i < 4; i++){
+        if (pthread_create(&(t1[i]), NULL, (void*)t1_method, 4-i)) {
+            perror("pthread_create");
+        }
+        
+        if (pthread_join(t1[i], NULL)) {
+            perror("pthread_join");
+        }                                            
+    }
+}
+
+void *t2_method_semaphore(int rank){
+    
+    while (list[rank].x != 0){
+        int xi=list[rank].x;
+        int yi=list[rank].y;
+        upMovement(xi, yi);
+        entityMovement(&list[rank]);
+        downMovement(xi, yi);
+    }
+
+    pthread_exit(NULL);
+}
+
+/*
+**general method for  with semaphores
+*/
+void run_t2_semaphore(){
+    pthread_t t2[people];
+
+    for (int i = 0; i < people; i++){
+      if (pthread_create(&(t2[i]), NULL, (void*)t2_method_semaphore, i)) {
+            perror("pthread_create");
+          }
+      //printf("in thread %d\n", i);
+    }
+
+}
 
 
 int main(int argc, char const *argv[]){
@@ -790,9 +827,21 @@ int main(int argc, char const *argv[]){
         break;
 
         case 2:
+            switch(thread){
+                case 0:
+                    run_global(0, (void*)run_t0);
+                    break;
+                case 1:
+                    run_global(0, run_t1_semaphore);
+                    break;
+                case 2:
+                    run_global(0, run_t2_semaphore);
+                    break;
+            }        
         break;
 
         case 3:
+        printf("not implemented yet\n" );
         break;        
     }
 
