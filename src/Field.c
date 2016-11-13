@@ -759,6 +759,25 @@ void run_t2(){
 }
 
 /*
+**general method for t0
+*/
+void run_t0_semaphore(int printed){
+    while (end() == 0){
+        for (int j = 0; j < people; j++){
+            int xi=list[j].x;
+            int yi=list[j].y;
+            if (xi!= 0 && yi != 0){
+                upMovement(xi, yi);
+                entityMovement(&list[j]);
+                downMovement(xi, yi);
+            }
+        }
+        if (printed == 1) printf("\n");
+        if (printed == 1) print(f);
+    }
+}
+
+/*
  *function used for a thread in the t1 case
  */
 void *t1_method_semaphore(int area){
@@ -853,7 +872,7 @@ int main(int argc, char const *argv[]){
       case 2:
           switch(thread){
               case 0:
-                  run_global(0, (void*)run_t0);
+                  run_global(0, (void*)run_t0_semaphore);
                   break;
               case 1:
                   run_global(0, run_t1_semaphore);
