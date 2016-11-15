@@ -29,6 +29,8 @@ Semaphore s;
 int people, thread, t = 0, azimuthY = 63, initList = 0, bool_time = 0, etape=1;
 Entity list[512];
 double timeTmp;
+sem_t semaphore[512];
+
 
 /*********************************************
  *                                           *
@@ -794,7 +796,7 @@ void *t1_method_semaphore(int area){
                 }
             }
         }
-
+        sem_post(&semaphore[area]);
     }
     pthread_exit(NULL);
 }
@@ -804,14 +806,21 @@ void *t1_method_semaphore(int area){
 */
 void run_t1_semaphore(){
     pthread_t t1[4];
+    for (int i = 0; i < 4; i++){
+        sem_init(&semaphore[i],0,0);
+      
+    }
 
     for (int i = 0; i < 4; i++){
         if (pthread_create(&(t1[i]), NULL, (void*)t1_method_semaphore, 4-i)) {
             perror("pthread_create");
         }
-        if (pthread_join(t1[i], NULL)) {
-            perror("pthread_join");
-        }                                            
+        sem_post(&semaphore[i]);     
+    }
+
+    for (int i = 0; i < 4; i++){
+      sem_wait(&semaphore[i]);
+      sem_post(&semaphore[i]);
     }
 }
 
@@ -824,6 +833,7 @@ void *t2_method_semaphore(int rank){
         entityMovement(&list[rank]);
         downMovement(xi, yi);
     }
+    sem_post(&semaphore[rank]);
 
     pthread_exit(NULL);
 }
@@ -835,15 +845,20 @@ void run_t2_semaphore(){
     pthread_t t2[people];
 
     for (int i = 0; i < people; i++){
-      if (pthread_create(&(t2[i]), NULL, (void*)t2_method_semaphore, i)) {
+        sem_init(&semaphore[i],0,0);
+    }
+
+    for (int i = 0; i < people; i++){
+            if (pthread_create(&(t2[i]), NULL, (void*)t2_method_semaphore, i)) {
             perror("pthread_create");
       }
     }
 
-    for (int i = 0; i < people; i++){
-      if (pthread_join(t2[i], NULL)) {
-        perror("pthread_join");
-      }        
+    for (int i = 0; i < people; i++)
+    {
+      sem_wait(&semaphore[i]);
+      sem_post(&semaphore[i]);
+
     }
 }
 
