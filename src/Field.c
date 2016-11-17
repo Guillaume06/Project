@@ -586,7 +586,7 @@ void parser(int argc, char const *argv[]){
                 number = argv[i][1]-'0';
                 if(0 <= number && number < 10 && strlen(argv[i]) == 2){
                     people = power(number);
-                    //printf("people = %d\n",people );
+                    printf("execution with %d persons\n",people );
                   
                 }
                 else
@@ -596,8 +596,7 @@ void parser(int argc, char const *argv[]){
                 number = argv[i][1]-'0';
                 if(0 <= number && number < 3 && strlen(argv[i]) == 2){
                     thread = number;
-                    //printf("thread = %d\n",thread );
-                
+                    printf("argument t%d\n",thread );
                 }
 
                 else
@@ -610,7 +609,7 @@ void parser(int argc, char const *argv[]){
                 number = argv[i][1]-'0';
                 if(1 <= number && number < 4 && strlen(argv[i]) == 2){
                     etape = number;
-                    //printf("etape = %d\n",etape );
+                    printf("Step n°%d\n",etape );
                 }
 
                 else
@@ -646,6 +645,7 @@ void run_global(int printed,void (*function)(void)){
         time_t      timeUser[5];
         struct      rusage rUsage;
         for(int i = 0; i< 5; i++){
+            printf("starting the execution number %d\n",i+1 );
             startField(people, 0);
 
             timeInit                = ((double)clock())/CLOCKS_PER_SEC;
