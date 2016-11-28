@@ -56,15 +56,12 @@ sem_t semaphore[512];
     sem_post(&s[x][y]);
  }
 
-
-
 /*
  * Will unlock the target semaphore
  */
  void down(int x, int y){
     sem_wait(&s[x][y]);
  }
-
 
  /*
   * Will lock the lower part of the entity
@@ -95,6 +92,7 @@ sem_t semaphore[512];
     up(x - 1, y + 2);
     up(x - 1, y + 3);
  }
+
 /*
  * Will lock the place needed for the movement algorithm
  */
@@ -680,6 +678,12 @@ void run_global(int printed,void (*function)(void)){
     }
 }
 
+/*********************************************
+ *                                           *
+ *               e1 Functions                *
+ *                                           *
+ *********************************************/
+
 /*
  *function used for a thread in the t1 case
  */
@@ -759,6 +763,13 @@ void run_t2(){
         }
     } 
 }
+
+
+/*********************************************
+ *                                           *
+ *               e2 Functions                *
+ *                                           *
+ *********************************************/
 
 /*
 **general method for t0
@@ -861,6 +872,22 @@ void run_t2_semaphore(){
 
     }
 }
+
+
+/*********************************************
+ *                                           *
+ *               e3 Functions                *
+ *                                           *
+ *********************************************/
+
+
+
+/*********************************************
+ *                                           *
+ *                   Main                    *
+ *                                           *
+ *********************************************/
+
 
 int main(int argc, char const *argv[]){
 
