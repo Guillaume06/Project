@@ -7,6 +7,18 @@
 #include <math.h>
 #include <unistd.h>
 #include <semaphore.h> 
+#include <time.h>
+
+
+#define KNRM  "\x1B[0m"
+#define KRED  "\x1B[31m"
+#define KGRN  "\x1B[32m"
+#define KYEL  "\x1B[33m"
+#define KBLU  "\x1B[34m"
+#define KMAG  "\x1B[35m"
+#define KCYN  "\x1B[36m"
+#define KWHT  "\x1B[37m"
+
 
 /*
  * @author: Guillaume FILIOL DE RAIMOND-MICHEL, Thibaut GONNIN
@@ -30,6 +42,10 @@ int people, thread, t = 0, azimuthY = 63, initList = 0, bool_time = 0, etape=1;
 Entity list[512];
 double timeTmp;
 sem_t semaphore[512];
+
+int cptPrint = 1;
+
+void print(Field f);
 
 
 /*********************************************
@@ -476,6 +492,9 @@ void entityMovement(Entity* e){
     }else{
         moveLeft(e);
     }
+    system("clear");
+    cptPrint++;
+    if (cptPrint%4 == 1)print(f);
 }
 
 /*********************************************
@@ -525,12 +544,30 @@ void init(){
  * 0 if she moved, 1 otherwise
  */
 void print(Field f){
-    for (int j = 127; j >= 0; j--){
-        for (int i = 0; i < 512; i++){
-            printf("%d", f[i][j]);
+    for (int j = 127; j >= 0; j-=4){
+        for (int i = 0; i < 512; i+=4){
+            switch (f[i][j]){
+              case 0 :
+                printf("%s%d", KMAG, f[i][j]);
+                break;
+              case 1 :
+                printf("%s%d", KWHT, f[i][j]);
+                break;
+              case 2 : 
+                printf("%s%d", KYEL, f[i][j]);
+                break;
+              case 3 : 
+                printf("%s%d", KRED, f[i][j]);
+                break;
+            }
         }
         printf("\n");
     }
+    printf("\n\n\n");
+
+    clock_t start,end;
+    start=clock();
+    while(((end=clock())-start)<=CLOCKS_PER_SEC/2);
 }
 
 /*
