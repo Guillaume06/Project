@@ -548,10 +548,8 @@ void init(){
  * 0 if she moved, 1 otherwise
  */
 void print(Field f){
-printf("Here\n");
     sem_wait(&aff);
     system("clear");
-    printf("Here\n");
     for (int j = 127; j >= 0; j-=4){
         for (int i = 0; i < 512; i+=4){
             switch (f[i][j]){
