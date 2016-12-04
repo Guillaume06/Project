@@ -495,7 +495,6 @@ void entityMovement(Entity* e){
     }else{
         moveLeft(e);
     }
-
     if ((cptPrint%4 == 1) && (affich == 1)){
         print(f);
     }
@@ -549,9 +548,10 @@ void init(){
  * 0 if she moved, 1 otherwise
  */
 void print(Field f){
+printf("Here\n");
     sem_wait(&aff);
     system("clear");
-    printf("CptPrint : %d\n", cptPrint);
+    printf("Here\n");
     for (int j = 127; j >= 0; j-=4){
         for (int i = 0; i < 512; i+=4){
             switch (f[i][j]){
@@ -847,6 +847,7 @@ void run_t0_semaphore(int printed){
 void *t1_method_semaphore(int area){
 
     while (end() == 0){
+        sem_wait(&semaphore[area]);
         for (int j = 0; j< people; j++){
             int xi=list[j].x;
             int yi=list[j].y;
