@@ -252,7 +252,7 @@ void print(Field f);
  * Will lock the place needed for the movement algorithm
  */
  void upMutexMovement(int x, int y,int rank_mutex){
-    printf("call from %d\n",rank_mutex );
+    //printf("call from %d\n",rank_mutex );
     pthread_mutex_lock(&m[rank_mutex]); 
 
     upMutex(x, y,rank_mutex);
