@@ -6,7 +6,7 @@
 #include <pthread.h>
 #include <math.h>
 #include <unistd.h>
-#include <semaphore.h> 
+#include <semaphore.h>
 #include <time.h>
 
 
@@ -42,8 +42,11 @@ int people, thread, t = 0, azimuthY = 63, initList = 0, bool_time = 0, etape=1;
 Entity list[512];
 double timeTmp;
 sem_t semaphore[512];
+int affich = 1;
 
 int cptPrint = 1;
+
+sem_t aff;
 
 void print(Field f);
 
@@ -492,9 +495,11 @@ void entityMovement(Entity* e){
     }else{
         moveLeft(e);
     }
-    system("clear");
+
+    if ((cptPrint%4 == 1) && (affich == 1)){
+        print(f);
+    }
     cptPrint++;
-    if (cptPrint%4 == 1)print(f);
 }
 
 /*********************************************
@@ -544,6 +549,9 @@ void init(){
  * 0 if she moved, 1 otherwise
  */
 void print(Field f){
+    sem_wait(&aff);
+    system("clear");
+    printf("CptPrint : %d\n", cptPrint);
     for (int j = 127; j >= 0; j-=4){
         for (int i = 0; i < 512; i+=4){
             switch (f[i][j]){
@@ -553,21 +561,22 @@ void print(Field f){
               case 1 :
                 printf("%s%d", KWHT, f[i][j]);
                 break;
-              case 2 : 
+              case 2 :
                 printf("%s%d", KYEL, f[i][j]);
                 break;
-              case 3 : 
+              case 3 :
                 printf("%s%d", KRED, f[i][j]);
                 break;
             }
         }
         printf("\n");
     }
-    printf("\n\n\n");
+    printf("%s\n", KWHT);
 
     clock_t start,end;
     start=clock();
-    while(((end=clock())-start)<=CLOCKS_PER_SEC/2);
+    while(((end=clock())-start)<=CLOCKS_PER_SEC);
+    sem_post(&aff);
 }
 
 /*
@@ -622,7 +631,7 @@ void parser(int argc, char const *argv[]){
                 if(0 <= number && number < 10 && strlen(argv[i]) == 2){
                     people = power(number);
                     printf("execution with %d persons\n",people );
-                  
+
                 }
                 else
                     printf("%s\n","Issue with the number given with the parameters -p. This number should be between 0 and 9" );
@@ -638,7 +647,11 @@ void parser(int argc, char const *argv[]){
                     printf("%s\n","Issue with the number given with the parameters -t. This number should be 0,1 or 2" );
             }
             else if(*argv[i]=='m'){
+                affich = 0;
                 bool_time = 1;
+            }
+            else if(*argv[i]=='g'){
+                affich = 0;
             }
             else if (*argv[i]=='e'){
                 number = argv[i][1]-'0';
@@ -648,7 +661,7 @@ void parser(int argc, char const *argv[]){
                 }
 
                 else
-                    printf("%s\n","Issue with the number given with the parameters -e. This number should be 1,2 or 3" );                
+                    printf("%s\n","Issue with the number given with the parameters -e. This number should be 1,2 or 3" );
 
             }
             else{
@@ -667,7 +680,6 @@ void parser(int argc, char const *argv[]){
 void startField(int entityNumber, int printed){
     init();
     generateXRandomEntities(entityNumber);
-    if (printed == 1)print(f);
 }
 
 
@@ -725,7 +737,6 @@ void run_global(int printed,void (*function)(void)){
  *function used for a thread in the t1 case
  */
 void *t1_method(int area){
-
     while (end() == 0){
         for (int j = 0; j< people; j++){
             if ((list[j].x != 0) && (list[j].y != 0)){
@@ -743,7 +754,6 @@ void *t1_method(int area){
  *function used for a thread in the t2 case
  */
 void *t2_method(int rank){
-    
     while (list[rank].x != 0){
         entityMovement(&list[rank]);
     }
@@ -755,14 +765,13 @@ void *t2_method(int rank){
 **general method for t0
 */
 void run_t0(int printed){
+    sem_init(&aff,0,1);
     while (end() == 0){
         for (int j = 0; j < people; j++){
             if (list[j].x != 0 && list[j].y != 0){
                 entityMovement(&list[j]);
             }
         }
-        if (printed == 1) printf("\n");
-        if (printed == 1) print(f);
     }
 }
 
@@ -771,6 +780,7 @@ void run_t0(int printed){
  */
 void run_t1(){
     pthread_t t1[4];
+    sem_init(&aff,0,1);
 
     for (int i = 0; i < 4; i++){
         if (pthread_create(&(t1[i]), NULL, (void*)t1_method, 4-i)) {
@@ -778,7 +788,7 @@ void run_t1(){
         }
         if (pthread_join(t1[i], NULL)) {
             perror("pthread_join");
-        }                                            
+        }
     }
 }
 
@@ -786,6 +796,7 @@ void run_t1(){
 **general method for t2
 */
 void run_t2(){
+    sem_init(&aff,0,1);
     pthread_t t2[people];
 
     for (int i = 0; i < people; i++){
@@ -798,7 +809,7 @@ void run_t2(){
         if (pthread_join(t2[i], NULL)) {
             perror("pthread_join");
         }
-    } 
+    }
 }
 
 
@@ -812,6 +823,11 @@ void run_t2(){
 **general method for t0
 */
 void run_t0_semaphore(int printed){
+    for (int i = 0; i < 4; i++){
+            sem_init(&semaphore[i],0,0);
+            sem_init(&aff,0,1);
+
+    }
     while (end() == 0){
         for (int j = 0; j < people; j++){
             int xi=list[j].x;
@@ -822,8 +838,6 @@ void run_t0_semaphore(int printed){
                 downMovement(xi, yi);
             }
         }
-        if (printed == 1) printf("\n");
-        if (printed == 1) print(f);
     }
 }
 
@@ -856,14 +870,15 @@ void run_t1_semaphore(){
     pthread_t t1[4];
     for (int i = 0; i < 4; i++){
         sem_init(&semaphore[i],0,0);
-      
+        sem_init(&aff,0,1);
+
     }
 
     for (int i = 0; i < 4; i++){
         if (pthread_create(&(t1[i]), NULL, (void*)t1_method_semaphore, 4-i)) {
             perror("pthread_create");
         }
-        sem_post(&semaphore[i]);     
+        sem_post(&semaphore[i]);
     }
 
     for (int i = 0; i < 4; i++){
@@ -873,7 +888,7 @@ void run_t1_semaphore(){
 }
 
 void *t2_method_semaphore(int rank){
-    
+
     while (list[rank].x != 0){
         int xi=list[rank].x;
         int yi=list[rank].y;
@@ -894,6 +909,7 @@ void run_t2_semaphore(){
 
     for (int i = 0; i < people; i++){
         sem_init(&semaphore[i],0,0);
+        sem_init(&aff,0,1);
     }
 
     for (int i = 0; i < people; i++){
@@ -931,7 +947,6 @@ int main(int argc, char const *argv[]){
     srand (time(NULL));
 
     parser(argc,argv);
-    
     startField(people,0);
     switch(etape){
       case 1:
@@ -959,12 +974,12 @@ int main(int argc, char const *argv[]){
               case 2:
                   run_global(0, run_t2_semaphore);
                   break;
-          }        
+          }
       break;
 
       case 3:
         printf("not implemented yet\n" );
-      break;        
+      break;
     }
 
     return 0;
