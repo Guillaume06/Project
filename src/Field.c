@@ -46,6 +46,12 @@ int affich = 1;
 
 int cptPrint = 1;
 
+pthread_mutex_t m[512];
+pthread_cond_t cond[512][128];
+int bool_person[512][128];
+
+int nbrThread[512];
+
 sem_t aff;
 
 void print(Field f);
@@ -188,6 +194,141 @@ void print(Field f);
      downMovementUp    (x, y);
      down(x - 1, y  + 4);
      down(x - 1, y  - 1);
+  }
+
+/*********************************************
+ *                                           *
+ *              Mutex Functions              *
+ *                                           *
+ *********************************************/
+
+/*
+ * Will lock the target semaphore
+ */
+ void upMutex(int x, int y,int rank_mutex){
+    if (bool_person[x][y]==1) pthread_cond_wait(&cond[x][y], &m[rank_mutex]);
+    bool_person[x][y]=1;
+ }
+
+/*
+ * Will unlock the target semaphore
+ */
+ void downMutex(int x, int y,int rank_mutex){
+    bool_person[x][y]=0;
+    pthread_cond_signal(&cond[x][y]);
+ }
+
+ /*
+  * Will lock the lower part of the entity
+  */
+ void upMutexMovementDown(int x, int y,int rank_mutex){
+    upMutex(x    , y - 1,rank_mutex);
+    upMutex(x + 1, y - 1,rank_mutex);
+    upMutex(x + 2, y - 1,rank_mutex);
+    upMutex(x + 3, y - 1,rank_mutex);
+ }
+
+ /*
+  * Will lock the upMutexper part of the entity
+  */
+ void upMutexMovementUp(int x, int y,int rank_mutex){
+    upMutex(x    , y + 4,rank_mutex);
+    upMutex(x + 1, y + 4,rank_mutex);
+    upMutex(x + 2, y + 4,rank_mutex);
+    upMutex(x + 3, y + 4,rank_mutex);
+ }
+
+ /*
+  * Will lock the left part of the entity
+  */
+ void upMutexMovementLeft(int x, int y,int rank_mutex){
+    upMutex(x - 1, y     ,rank_mutex);
+    upMutex(x - 1, y + 1,rank_mutex);
+    upMutex(x - 1, y + 2,rank_mutex);
+    upMutex(x - 1, y + 3,rank_mutex);
+ }
+
+/*
+ * Will lock the place needed for the movement algorithm
+ */
+ void upMutexMovement(int x, int y,int rank_mutex){
+    printf("call from %d\n",rank_mutex );
+    pthread_mutex_lock(&m[rank_mutex]); 
+
+    upMutex(x, y,rank_mutex);
+    for (int i = 1; i <= 3; i++){
+        upMutex(x + i, y     ,rank_mutex);
+        upMutex(x    , y + i,rank_mutex);
+        upMutex(x + i, y + i,rank_mutex);
+    }
+    upMutex (x + 1, y + 2,rank_mutex);
+    upMutex (x + 2, y + 1,rank_mutex);
+    upMutex (x + 3, y + 1,rank_mutex);
+    upMutex (x + 1, y + 3,rank_mutex);
+    upMutex (x + 3, y + 2,rank_mutex);
+    upMutex (x + 2, y + 3,rank_mutex);
+
+    upMutexMovementDown  (x, y,rank_mutex);
+    upMutexMovementLeft  (x, y,rank_mutex);
+    upMutexMovementUp    (x, y,rank_mutex);
+    upMutex(x - 1, y  + 4,rank_mutex);
+    upMutex(x - 1, y  - 1,rank_mutex);
+ }
+
+  /*
+   * Will unlock the lower part of the entity
+   */
+  void downMutexMovementDown(int x, int y,int rank_mutex){
+     downMutex(x    , y - 1,rank_mutex);
+     downMutex(x + 1, y - 1,rank_mutex);
+     downMutex(x + 2, y - 1,rank_mutex);
+     downMutex(x + 3, y - 1,rank_mutex);
+  }
+
+  /*
+   * Will unlock the upMutexper part of the entity
+   */
+  void downMutexMovementUp(int x, int y,int rank_mutex){
+     downMutex(x    , y - 4,rank_mutex);
+     downMutex(x + 1, y - 4,rank_mutex);
+     downMutex(x + 2, y - 4,rank_mutex);
+     downMutex(x + 3, y - 4,rank_mutex);
+  }
+
+  /*
+   * Will unlock the left part of the entity
+   */
+  void downMutexMovementLeft(int x, int y,int rank_mutex){
+     downMutex(x - 1, y     ,rank_mutex);
+     downMutex(x - 1, y + 1,rank_mutex);
+     downMutex(x - 1, y + 2,rank_mutex);
+     downMutex(x - 1, y + 3,rank_mutex);
+  }
+
+ /*
+  * Will unlock the place needed for the movement algorithm
+  */
+  void downMutexMovement(int x, int y,int rank_mutex){
+     downMutex(x, y, rank_mutex);
+     for (int i = 1; i <= 3; i++){
+         downMutex(x + i , y,rank_mutex     );
+         downMutex(x     , y + i , rank_mutex);
+         downMutex(x + i , y + i ,rank_mutex);
+     }
+     downMutex(x + 1, y + 2,rank_mutex);
+     downMutex(x + 2, y + 1, rank_mutex);
+     downMutex(x + 3, y + 1,rank_mutex);
+     downMutex(x + 1, y + 3,rank_mutex);
+     downMutex(x + 3, y + 2,rank_mutex);
+     downMutex(x + 2, y + 3, rank_mutex);
+
+     downMutexMovementDown  (x, y,rank_mutex);
+     downMutexMovementLeft  (x, y,rank_mutex);
+     downMutexMovementUp    (x, y,rank_mutex);
+     downMutex(x - 1, y  + 4,rank_mutex);
+     downMutex(x - 1, y  - 1,rank_mutex);
+
+     pthread_mutex_unlock(&m[rank_mutex]);
   }
 
 /*********************************************
@@ -934,6 +1075,88 @@ void run_t2_semaphore(){
  *                                           *
  *********************************************/
 
+/*
+ *function used for a thread in the t1 case
+ */
+void *t1_method_mutex(int area){
+
+    while (end() == 0){
+        for (int j = 0; j< people; j++){
+            int xi=list[j].x;
+            int yi=list[j].y;
+            if ((xi != 0) && (yi != 0)){
+                if ((xi <= area*128) && (xi <= area*128 + 127)){
+                  upMovement(xi, yi);
+                  entityMovement(&list[j]);
+                  downMovement(xi, yi);
+                }
+            }
+        }
+        sem_post(&semaphore[area]);
+    }
+    pthread_exit(NULL);
+}
+
+/*
+**general method for t1 with semaphores
+*/
+void run_t1_mutex(){
+    pthread_t t1[4];
+    for (int i = 0; i < 4; i++){
+        sem_init(&semaphore[i],0,0);
+      
+    }
+
+    for (int i = 0; i < 4; i++){
+        if (pthread_create(&(t1[i]), NULL, (void*)t1_method_mutex, 4-i)) {
+            perror("pthread_create");
+        }
+        sem_post(&semaphore[i]);     
+    }
+    for (int i = 0; i < 4; i++){
+      sem_wait(&semaphore[i]);
+      sem_post(&semaphore[i]);
+    }
+}
+
+void *t2_method_mutex(int rank){
+    
+    while (list[rank].x != 0){
+        int xi=list[rank].x;
+        int yi=list[rank].y;
+        upMutexMovement(xi, yi,rank);
+        entityMovement(&list[rank]);
+        downMutexMovement(xi, yi,rank);
+    }
+}
+
+/*
+**general method for  with semaphores
+*/
+void run_t2_mutex(){
+    pthread_t t2[people];
+
+    pthread_cond_t cond_join[people];
+    pthread_mutex_t bool_join[people];
+    
+
+    for (int i = 0; i < people; i++){
+        if (pthread_create(&(t2[i]), NULL, (void*)t2_method_mutex, i)) {
+            perror("pthread_create");
+        }
+
+//        pthread_cond_wait(&cond_join[i], &bool_join[i]);
+    }
+    
+    for (int i = 0; i < people; i++){
+        //pthread_cond_signal(&cond_join[i]);
+        if (pthread_join(t2[i], NULL)) {
+            perror("pthread_join");
+        }
+    }
+
+
+}
 
 
 /*********************************************
@@ -979,7 +1202,18 @@ int main(int argc, char const *argv[]){
       break;
 
       case 3:
-        printf("not implemented yet\n" );
+            switch(thread){
+              case 0:
+                  run_global(0, (void*)run_t0_semaphore);
+                  break;
+              case 1:
+                  run_global(0, run_t1_mutex);
+                  break;
+              case 2:
+                  run_global(0, run_t2_mutex);
+                  break;
+          }
+        
       break;
     }
 
