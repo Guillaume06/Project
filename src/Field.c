@@ -45,12 +45,13 @@ sem_t semaphore[512];
 int affich = 1;
 
 int cptPrint = 1;
-
+pthread_cond_t cond_join[];
+pthread_mutex_t bool_join[];
 pthread_mutex_t m[512];
 pthread_cond_t cond[512][128];
 int bool_person[512][128];
 
-int nbrThread[512];
+int nbrThread=0;
 
 sem_t aff;
 
@@ -206,7 +207,8 @@ void print(Field f);
  * Will lock the target semaphore
  */
  void upMutex(int x, int y,int rank_mutex){
-    if (bool_person[x][y]==1) pthread_cond_wait(&cond[x][y], &m[rank_mutex]);
+    while (bool_person[x][y]==1) pthread_cond_wait(&cond[x][y], &m[rank_mutex]);
+    pthread_cond_signal(&cond[x][y]);
     bool_person[x][y]=1;
  }
 
@@ -215,7 +217,7 @@ void print(Field f);
  */
  void downMutex(int x, int y,int rank_mutex){
     bool_person[x][y]=0;
-    pthread_cond_signal(&cond[x][y]);
+    //pthread_cond_signal(&cond[x][y]);
  }
 
  /*
@@ -253,7 +255,7 @@ void print(Field f);
  */
  void upMutexMovement(int x, int y,int rank_mutex){
     //printf("call from %d\n",rank_mutex );
-    pthread_mutex_lock(&m[rank_mutex]);
+    //pthread_mutex_lock(&m[rank_mutex]);
     upMutex(x, y,rank_mutex);
     for (int i = 1; i <= 3; i++){
         upMutex(x + i, y     ,rank_mutex);
@@ -635,9 +637,11 @@ void entityMovement(Entity* e){
     }else{
         moveLeft(e);
     }
+
     if ((cptPrint%4 == 1) && (affich == 1)){
         print(f);
     }
+
     cptPrint++;
 }
 
@@ -688,7 +692,7 @@ void init(){
  * 0 if she moved, 1 otherwise
  */
 void print(Field f){
-    sem_wait(&aff);
+    //sem_wait(&aff);
     system("clear");
     for (int j = 127; j >= 0; j-=4){
         for (int i = 0; i < 512; i+=4){
@@ -714,7 +718,7 @@ void print(Field f){
     clock_t start,end;
     start=clock();
     while(((end=clock())-start)<=CLOCKS_PER_SEC);
-    sem_post(&aff);
+    //sem_post(&aff);
 }
 
 /*
@@ -1102,7 +1106,6 @@ void run_t1_mutex(){
     pthread_t t1[4];
     for (int i = 0; i < 4; i++){
         sem_init(&semaphore[i],0,0);
-
     }
 
     for (int i = 0; i < 4; i++){
@@ -1125,6 +1128,8 @@ void *t2_method_mutex(int rank){
         entityMovement(&list[rank]);
         downMutexMovement(xi, yi,rank);
     }
+    nbrThread++;
+    pthread_cond_wait(&cond_join[rank], &bool_join[rank]);
 }
 
 /*
@@ -1132,28 +1137,20 @@ void *t2_method_mutex(int rank){
 */
 void run_t2_mutex(){
     pthread_t t2[people];
-
-    pthread_cond_t cond_join[people];
-    pthread_mutex_t bool_join[people];
-    sem_init(&affich, 0, 0);
+    cond_join[people];
+    bool_join[people];
+    sem_init(&affich, 0, 1);
 
 
     for (int i = 0; i < people; i++){
         if (pthread_create(&(t2[i]), NULL, (void*)t2_method_mutex, i)) {
             perror("pthread_create");
         }
-
-//        pthread_cond_wait(&cond_join[i], &bool_join[i]);
+        pthread_cond_init( &cond_join[i], NULL);
+        pthread_mutex_init( &bool_join[i], NULL);
+        pthread_cond_signal(&cond_join[i]);
     }
-
-    for (int i = 0; i < people; i++){
-        //pthread_cond_signal(&cond_join[i]);
-        if (pthread_join(t2[i], NULL)) {
-            perror("pthread_join");
-        }
-    }
-
-
+    while(nbrThread != people);
 }
 
 
