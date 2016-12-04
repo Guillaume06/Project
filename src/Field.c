@@ -102,10 +102,10 @@ void print(Field f);
   * Will lock the upper part of the entity
   */
  void upMovementUp(int x, int y){
-    up(x    , y - 4);
-    up(x + 1, y - 4);
-    up(x + 2, y - 4);
-    up(x + 3, y - 4);
+    up(x    , y + 4);
+    up(x + 1, y + 4);
+    up(x + 2, y + 4);
+    up(x + 3, y + 4);
  }
 
  /*
@@ -156,10 +156,10 @@ void print(Field f);
    * Will unlock the upper part of the entity
    */
   void downMovementUp(int x, int y){
-     down(x    , y - 4);
-     down(x + 1, y - 4);
-     down(x + 2, y - 4);
-     down(x + 3, y - 4);
+     down(x    , y + 4);
+     down(x + 1, y + 4);
+     down(x + 2, y + 4);
+     down(x + 3, y + 4);
   }
 
   /*
@@ -253,8 +253,7 @@ void print(Field f);
  */
  void upMutexMovement(int x, int y,int rank_mutex){
     //printf("call from %d\n",rank_mutex );
-    pthread_mutex_lock(&m[rank_mutex]); 
-
+    pthread_mutex_lock(&m[rank_mutex]);
     upMutex(x, y,rank_mutex);
     for (int i = 1; i <= 3; i++){
         upMutex(x + i, y     ,rank_mutex);
@@ -289,10 +288,10 @@ void print(Field f);
    * Will unlock the upMutexper part of the entity
    */
   void downMutexMovementUp(int x, int y,int rank_mutex){
-     downMutex(x    , y - 4,rank_mutex);
-     downMutex(x + 1, y - 4,rank_mutex);
-     downMutex(x + 2, y - 4,rank_mutex);
-     downMutex(x + 3, y - 4,rank_mutex);
+     downMutex(x    , y + 4,rank_mutex);
+     downMutex(x + 1, y + 4,rank_mutex);
+     downMutex(x + 2, y + 4,rank_mutex);
+     downMutex(x + 3, y + 4,rank_mutex);
   }
 
   /*
@@ -1025,6 +1024,7 @@ void run_t1_semaphore(){
       sem_wait(&semaphore[i]);
       sem_post(&semaphore[i]);
     }
+
 }
 
 void *t2_method_semaphore(int rank){
@@ -1102,14 +1102,14 @@ void run_t1_mutex(){
     pthread_t t1[4];
     for (int i = 0; i < 4; i++){
         sem_init(&semaphore[i],0,0);
-      
+
     }
 
     for (int i = 0; i < 4; i++){
         if (pthread_create(&(t1[i]), NULL, (void*)t1_method_mutex, 4-i)) {
             perror("pthread_create");
         }
-        sem_post(&semaphore[i]);     
+        sem_post(&semaphore[i]);
     }
     for (int i = 0; i < 4; i++){
       sem_wait(&semaphore[i]);
@@ -1118,7 +1118,6 @@ void run_t1_mutex(){
 }
 
 void *t2_method_mutex(int rank){
-    
     while (list[rank].x != 0){
         int xi=list[rank].x;
         int yi=list[rank].y;
@@ -1136,7 +1135,8 @@ void run_t2_mutex(){
 
     pthread_cond_t cond_join[people];
     pthread_mutex_t bool_join[people];
-    
+    sem_init(&affich, 0, 0);
+
 
     for (int i = 0; i < people; i++){
         if (pthread_create(&(t2[i]), NULL, (void*)t2_method_mutex, i)) {
@@ -1145,7 +1145,7 @@ void run_t2_mutex(){
 
 //        pthread_cond_wait(&cond_join[i], &bool_join[i]);
     }
-    
+
     for (int i = 0; i < people; i++){
         //pthread_cond_signal(&cond_join[i]);
         if (pthread_join(t2[i], NULL)) {
@@ -1211,7 +1211,7 @@ int main(int argc, char const *argv[]){
                   run_global(0, run_t2_mutex);
                   break;
           }
-        
+
       break;
     }
 
